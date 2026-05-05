@@ -121,12 +121,12 @@
       <div class="note note-blue" style="margin-bottom:10px;font-size:11px;">
         <strong>AssemblyAI</strong> — transcribe desde Drive o YouTube<br>
         <a href="https://www.assemblyai.com" target="_blank" style="color:#88aaff;">assemblyai.com</a><br><br>
-        <strong>Groq</strong> — traduce con LLaMA 70b<br>
-        <a href="https://console.groq.com" target="_blank" style="color:#88aaff;">console.groq.com</a>
+        <strong>Claude API</strong> — traduce (Anthropic)<br>
+        <a href="https://console.anthropic.com" target="_blank" style="color:#88aaff;">console.anthropic.com</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="field"><label>AssemblyAI API Key</label><input type="password" id="assemblyKey" placeholder="••••••••••••••••"/></div>
-        <div class="field"><label>Groq API Key</label><input type="password" id="groqKey" placeholder="gsk_••••••••••••••••"/></div>
+        <div class="field"><label>Claude API Key (Anthropic)</label><input type="password" id="groqKey" placeholder="sk-ant-••••••••••••••••"/></div>
       </div>
     </div>
     <hr class="divider">
@@ -374,7 +374,7 @@ async function runPipeline(){
   var groqKey=document.getElementById("groqKey").value.trim();
   var videoUrl=document.getElementById("videoUrl").value.trim();
   if(!assemblyKey){log("Falta AssemblyAI API Key","err");return;}
-  if(!groqKey){log("Falta Groq API Key","err");return;}
+  if(!groqKey){log("Falta Claude API Key","err");return;}
   if(!videoUrl){log("Falta el link del video","err");return;}
   if(!activeLangs.length){log("Agrega al menos un idioma destino","err");return;}
  
@@ -424,49 +424,51 @@ async function runPipeline(){
     segments=buildSegments(transcript,maxChars);
     log(segments.length+" segmentos creados","ok");
  
-    // TRANSLATE
-    log("Traduciendo con Groq LLaMA...","info");
+    // TRANSLATE — batch all segments in ONE call per language
+    log("Traduciendo con Groq LLaMA (1 llamada por idioma)...","info");
     var uniqueTexts=[...new Set(segments.map(function(s){return s.text;}))];
-    var total=uniqueTexts.length*activeLangs.length;
-    var done=0;
     var cache={};
  
     for(var li=0;li<activeLangs.length;li++){
       var lang=activeLangs[li];
       cache[lang.code]={};
+      setProgress(62+Math.round((li/activeLangs.length)*33),"Traduciendo a "+lang.label+"...");
+      log("Traduciendo "+uniqueTexts.length+" segmentos a "+lang.label+" en una sola llamada...");
+ 
+      // Build numbered list for batch translation
+      var numbered=uniqueTexts.map(function(t,i){return (i+1)+". "+t;}).join("\n");
+ 
+      var translated=null;
+      for(var attempt=0;attempt<4;attempt++){
+        var res=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"content-type":"application/json","x-api-key":groqKey,"anthropic-version":"2023-06-01"},
+          body:JSON.stringify({
+            model:"claude-haiku-4-5-20251001",
+            max_tokens:4000,
+            messages:[
+              {role:"user",content:"You are a professional subtitle translator. Translate ALL lines to "+lang.label+". Return ONLY a numbered list in the exact same format: 1. [translation]\n2. [translation]\netc. No explanations, no extra text. Keep translations concise and natural for video subtitles.\n\nTranslate each line to "+lang.label+":\n\n"+numbered}
+            ]
+          })
+        });
+        if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Claude API: "+(er.error?er.error.message:res.status));}
+        var rd=await res.json();
+        translated=rd.content[0].text.trim();
+        break;
+      }
+      if(!translated) throw new Error("Groq: no se pudo traducir a "+lang.label+" despues de varios intentos.");
+ 
+      // Parse numbered response back into cache
+      var lines=translated.split("\n").filter(function(l){return l.trim();});
+      for(var li2=0;li2<lines.length;li2++){
+        var line=lines[li2].trim();
+        var match=line.match(/^\d+\.\s*(.+)$/);
+        var translatedText=match?match[1]:line;
+        if(li2<uniqueTexts.length) cache[lang.code][uniqueTexts[li2]]=translatedText;
+      }
+      // Fill any missing
       for(var ti=0;ti<uniqueTexts.length;ti++){
-        var txt=uniqueTexts[ti];
-        // Retry loop with backoff for Groq rate limits
-        var translated=null;
-        for(var attempt=0;attempt<5;attempt++){
-          var res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
-            method:"POST",
-            headers:{"content-type":"application/json","authorization":"Bearer "+groqKey},
-            body:JSON.stringify({
-              model:"llama-3.3-70b-versatile",
-              max_tokens:300,
-              messages:[
-                {role:"system",content:"Professional subtitle translator. Return ONLY the translated text. No explanations. Concise and natural for video subtitles."},
-                {role:"user",content:"Translate to "+lang.label+":\n\n"+txt}
-              ]
-            })
-          });
-          if(res.status===429){
-            var wait=3000+(attempt*2000);
-            log("Rate limit Groq, esperando "+Math.round(wait/1000)+"s...");
-            await sleep(wait);
-            continue;
-          }
-          if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Groq: "+(er.error?er.error.message:res.status));}
-          var rd=await res.json();
-          translated=rd.choices[0].message.content.trim();
-          break;
-        }
-        if(!translated) throw new Error("Groq: no se pudo traducir despues de varios intentos.");
-        cache[lang.code][txt]=translated;
-        done++;
-        setProgress(62+Math.round((done/total)*33),"Traduciendo a "+lang.label+"... ("+done+"/"+total+")");
-        await sleep(2100);
+        if(!cache[lang.code][uniqueTexts[ti]]) cache[lang.code][uniqueTexts[ti]]=uniqueTexts[ti];
       }
       log("Traduccion a "+lang.label+" lista","ok");
     }
