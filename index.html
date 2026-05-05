@@ -6,122 +6,136 @@
 <title>LDMVideoSubGenerator</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0a0a0a; --surface: #111; --surface2: #1a1a1a;
-    --border: #2a2a2a; --border2: #333;
-    --text: #f0f0f0; --muted: #666;
-    --accent: #c8f135; --accent2: #a8d420;
-    --red: #ff4444; --blue: #4488ff;
-    --radius: 6px; --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
-  }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
-  header { border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: var(--bg); z-index: 100; }
-  .logo-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .logo-mark svg { width: 16px; height: 16px; }
-  .logo-text { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.02em; }
-  .logo-text span { color: var(--accent); }
-  .badge { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
-  .layout { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 57px); }
-  .sidebar { border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; max-height: calc(100vh - 57px); }
-  .main { padding: 20px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; max-height: calc(100vh - 57px); }
-  .section-label { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  .field label { font-size: 12px; color: var(--muted); }
-  input[type="text"], input[type="number"], input[type="password"], select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; border-radius: var(--radius); width: 100%; outline: none; transition: border-color 0.15s; }
-  input:focus, select:focus { border-color: var(--accent); }
-  input::placeholder { color: var(--muted); font-size: 12px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .divider { border: none; border-top: 1px solid var(--border); }
-  .upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 20px 16px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(200,241,53,0.04); }
-  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .upload-icon { font-size: 20px; margin-bottom: 5px; color: var(--muted); }
-  .upload-title { font-size: 13px; color: var(--text); margin-bottom: 3px; }
-  .upload-sub { font-size: 11px; color: var(--muted); }
-  .upload-name { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-top: 6px; min-height: 16px; }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
-  .toggle-row:last-child { border-bottom: none; }
-  .toggle-label { font-size: 13px; }
-  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; inset: 0; background: var(--border2); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
-  .toggle-slider::after { content: ''; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; background: var(--muted); border-radius: 50%; transition: all 0.2s; }
-  .toggle input:checked + .toggle-slider { background: var(--accent); }
-  .toggle input:checked + .toggle-slider::after { left: 19px; background: var(--bg); }
-  .lang-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .lang-tag { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 4px; padding: 4px 8px; font-size: 12px; font-family: var(--mono); color: var(--accent); }
-  .lang-tag button { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 14px; line-height: 1; }
-  .lang-tag button:hover { color: var(--red); }
-  .add-lang { display: flex; gap: 6px; margin-top: 8px; }
-  .add-lang input { flex: 1; }
-  .btn-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 6px 12px; border-radius: var(--radius); cursor: pointer; white-space: nowrap; transition: border-color 0.15s; font-family: var(--font); }
-  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-primary { background: var(--accent); color: var(--bg); border: none; font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 13px 20px; border-radius: var(--radius); cursor: pointer; width: 100%; letter-spacing: 0.02em; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-primary:active { transform: scale(0.99); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .btn-download { background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 8px; }
-  .btn-download:hover { background: rgba(200,241,53,0.08); }
-  .log-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; min-height: 180px; max-height: 300px; overflow-y: auto; font-family: var(--mono); font-size: 12px; line-height: 1.9; }
-  .log-line { display: flex; gap: 10px; }
-  .log-line .ts { color: var(--muted); flex-shrink: 0; }
-  .log-line .msg { color: var(--text); }
-  .log-line.ok .msg { color: var(--accent); }
-  .log-line.err .msg { color: var(--red); }
-  .log-line.info .msg { color: var(--blue); }
-  .log-empty { color: var(--muted); font-size: 12px; }
-  .step-indicator { display: flex; margin-bottom: 6px; }
-  .step { flex: 1; text-align: center; font-family: var(--mono); font-size: 10px; color: var(--muted); padding: 6px 4px; border-bottom: 2px solid var(--border); transition: all 0.2s; }
-  .step.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .step.done { color: var(--accent); border-bottom-color: var(--accent); opacity: 0.45; }
-  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
-  .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-  .result-card { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px; }
-  .result-lang { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 4px; }
-  .result-name { font-size: 12px; color: var(--text); margin-bottom: 3px; word-break: break-all; }
-  .result-count { font-size: 11px; color: var(--muted); }
-  .subtitle-preview { background: #000; border-radius: var(--radius); aspect-ratio: 16/5; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px; overflow: hidden; }
-  .sub-preview-text { font-size: 15px; font-weight: 500; text-align: center; line-height: 1.4; transition: all 0.2s; }
-  .api-note { background: rgba(68,136,255,0.08); border: 1px solid rgba(68,136,255,0.2); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; color: #88aaff; line-height: 1.6; }
-  .color-row { display: flex; align-items: center; gap: 8px; }
-  input[type="color"] { width: 32px; height: 32px; padding: 2px; cursor: pointer; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); }
-  input[type="range"] { -webkit-appearance: none; background: var(--border); height: 3px; border-radius: 2px; width: 100%; padding: 0; border: none; }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--accent); border-radius: 50%; cursor: pointer; }
-  .range-row { display: flex; align-items: center; gap: 10px; }
-  .range-val { font-family: var(--mono); font-size: 11px; color: var(--accent); min-width: 36px; text-align: right; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#2a2a2a;--border2:#333;--text:#f0f0f0;--muted:#666;--accent:#c8f135;--accent2:#a8d420;--red:#ff4444;--blue:#4488ff;--orange:#ff9944;--radius:6px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;}
+  header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:100;}
+  .logo-mark{width:28px;height:28px;background:var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .logo-mark svg{width:16px;height:16px;}
+  .logo-text{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.02em;}
+  .logo-text span{color:var(--accent);}
+  .badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:20px;}
+  .layout{display:grid;grid-template-columns:330px 1fr;min-height:calc(100vh - 57px);}
+  .sidebar{border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;max-height:calc(100vh - 57px);}
+  .main{padding:20px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;max-height:calc(100vh - 57px);}
+  .section-label{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:12px;color:var(--muted);}
+  input[type="text"],input[type="number"],input[type="password"],select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 10px;border-radius:var(--radius);width:100%;outline:none;transition:border-color .15s;}
+  input:focus,select:focus{border-color:var(--accent);}
+  input::placeholder{color:var(--muted);font-size:12px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .divider{border:none;border-top:1px solid var(--border);}
+  .mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .mode-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px 10px;cursor:pointer;transition:all .15s;text-align:center;}
+  .mode-card:hover{border-color:var(--border2);}
+  .mode-card.active{border-color:var(--accent);background:rgba(200,241,53,.05);}
+  .mode-card .mode-icon{font-size:18px;margin-bottom:5px;}
+  .mode-card .mode-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;}
+  .mode-card .mode-sub{font-size:10px;color:var(--muted);line-height:1.4;}
+  .mode-card.active .mode-title{color:var(--accent);}
+  .status-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:20px;}
+  .status-badge.detected{background:rgba(200,241,53,.1);color:var(--accent);border:1px solid rgba(200,241,53,.3);}
+  .status-badge.missing{background:rgba(255,153,68,.1);color:var(--orange);border:1px solid rgba(255,153,68,.3);}
+  .status-badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(200,241,53,.04);}
+  .upload-zone.ready{border-color:var(--accent);border-style:solid;}
+  .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-title{font-size:13px;color:var(--text);margin-bottom:3px;}
+  .upload-sub{font-size:11px;color:var(--muted);}
+  .upload-name{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:5px;min-height:14px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-label{font-size:13px;}
+  .toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:background .2s;}
+  .toggle-slider::after{content:'';position:absolute;left:3px;top:3px;width:14px;height:14px;background:var(--muted);border-radius:50%;transition:all .2s;}
+  .toggle input:checked+.toggle-slider{background:var(--accent);}
+  .toggle input:checked+.toggle-slider::after{left:19px;background:var(--bg);}
+  .lang-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .lang-tag{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--accent);border-radius:4px;padding:4px 8px;font-size:12px;font-family:var(--mono);color:var(--accent);}
+  .lang-tag button{background:none;border:none;color:var(--muted);cursor:pointer;padding:0;font-size:14px;line-height:1;}
+  .lang-tag button:hover{color:var(--red);}
+  .add-lang{display:flex;gap:6px;margin-top:8px;}
+  .add-lang input{flex:1;}
+  .btn-sm{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 12px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;transition:border-color .15s;font-family:var(--font);}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-primary{background:var(--accent);color:var(--bg);border:none;font-family:var(--mono);font-size:13px;font-weight:500;padding:13px 20px;border-radius:var(--radius);cursor:pointer;width:100%;letter-spacing:.02em;transition:background .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-primary:hover{background:var(--accent2);}
+  .btn-primary:active{transform:scale(.99);}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-download{background:var(--surface2);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:var(--radius);cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:6px;width:100%;margin-top:8px;}
+  .btn-download:hover{background:rgba(200,241,53,.08);}
+  .log-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;min-height:180px;max-height:300px;overflow-y:auto;font-family:var(--mono);font-size:12px;line-height:1.9;}
+  .log-line{display:flex;gap:10px;}
+  .log-line .ts{color:var(--muted);flex-shrink:0;}
+  .log-line .msg{color:var(--text);}
+  .log-line.ok .msg{color:var(--accent);}
+  .log-line.err .msg{color:var(--red);}
+  .log-line.info .msg{color:var(--blue);}
+  .log-line.warn .msg{color:var(--orange);}
+  .log-empty{color:var(--muted);font-size:12px;}
+  .step-indicator{display:flex;margin-bottom:6px;}
+  .step{flex:1;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted);padding:6px 4px;border-bottom:2px solid var(--border);transition:all .2s;}
+  .step.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .step.done{color:var(--accent);border-bottom-color:var(--accent);opacity:.45;}
+  .progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease;width:0%;}
+  .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+  .result-card{background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:14px;}
+  .result-lang{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.08em;margin-bottom:4px;}
+  .result-name{font-size:12px;color:var(--text);margin-bottom:3px;word-break:break-all;}
+  .result-meta{font-size:11px;color:var(--muted);}
+  .subtitle-preview{background:#000;border-radius:var(--radius);aspect-ratio:16/5;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px;overflow:hidden;}
+  .sub-preview-text{font-size:15px;font-weight:500;text-align:center;line-height:1.4;transition:all .2s;}
+  .note-blue{background:rgba(68,136,255,.08);border:1px solid rgba(68,136,255,.2);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:#88aaff;line-height:1.6;}
+  .note-green{background:rgba(200,241,53,.06);border:1px solid rgba(200,241,53,.2);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:var(--accent);line-height:1.6;}
+  .note-orange{background:rgba(255,153,68,.08);border:1px solid rgba(255,153,68,.2);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:var(--orange);line-height:1.6;}
+  .color-row{display:flex;align-items:center;gap:8px;}
+  input[type="color"]{width:32px;height:32px;padding:2px;cursor:pointer;border-radius:4px;background:var(--surface2);border:1px solid var(--border);}
+  input[type="range"]{-webkit-appearance:none;background:var(--border);height:3px;border-radius:2px;width:100%;padding:0;border:none;}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;}
+  .range-row{display:flex;align-items:center;gap:10px;}
+  .range-val{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:36px;text-align:right;}
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="logo-mark">
-    <svg viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="10" width="14" height="2.5" rx="1" fill="#0a0a0a"/>
-      <rect x="3" y="6.5" width="10" height="2" rx="1" fill="#0a0a0a" opacity="0.6"/>
-      <rect x="5" y="3.5" width="6" height="1.5" rx="0.75" fill="#0a0a0a" opacity="0.35"/>
-    </svg>
-  </div>
+  <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="10" width="14" height="2.5" rx="1" fill="#0a0a0a"/><rect x="3" y="6.5" width="10" height="2" rx="1" fill="#0a0a0a" opacity="0.6"/><rect x="5" y="3.5" width="6" height="1.5" rx="0.75" fill="#0a0a0a" opacity="0.35"/></svg></div>
   <span class="logo-text"><span>LDM</span>VideoSubGenerator</span>
-  <span class="badge">v2.0 · Groq Whisper + LLaMA</span>
+  <span class="badge">v3.0 · Smart Mode</span>
 </header>
-
 <div class="layout">
   <div class="sidebar">
 
     <div>
       <div class="section-label">API Key</div>
-      <div class="api-note" style="margin-bottom:10px;">
-        Solo necesitas <strong>una key de Groq</strong> — transcribe el audio con Whisper y traduce con LLaMA 70b. Gratis en <a href="https://console.groq.com" target="_blank" style="color:#88aaff;">console.groq.com</a>
+      <div class="note-blue" style="margin-bottom:10px;">Una sola key de Groq para todo. Gratis en <a href="https://console.groq.com" target="_blank" style="color:#88aaff;">console.groq.com</a></div>
+      <div class="field"><label>Groq API Key</label><input type="password" id="groqKey" placeholder="gsk_••••••••••••••••"/></div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <div class="section-label">Modo de operación</div>
+      <div class="mode-selector">
+        <div class="mode-card active" id="modeSheetCard" onclick="setMode('sheet')">
+          <div class="mode-icon">📄</div>
+          <div class="mode-title">Texto del Sheet</div>
+          <div class="mode-sub">Sheet ya tiene texto EN. Sin límite de tamaño.</div>
+        </div>
+        <div class="mode-card" id="modeWhisperCard" onclick="setMode('whisper')">
+          <div class="mode-icon">🎙</div>
+          <div class="mode-title">Transcribir audio</div>
+          <div class="mode-sub">Sheet sin texto. Whisper transcribe (máx 25MB).</div>
+        </div>
       </div>
-      <div class="field">
-        <label>Groq API Key</label>
-        <input type="password" id="groqKey" placeholder="gsk_••••••••••••••••" />
-      </div>
+      <div id="modeNote" style="margin-top:8px;"></div>
     </div>
 
     <hr class="divider">
@@ -130,19 +144,24 @@
       <div class="section-label">Archivos</div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="field">
-          <label>Video (MP4, MOV, AVI — máx 25MB)</label>
-          <div class="upload-zone" id="videoZone">
-            <input type="file" id="videoFile" accept="video/*,audio/*" onchange="onVideoSelect(this)">
-            <div class="upload-icon">▶</div>
-            <div class="upload-title">Selecciona o arrastra el video</div>
-            <div class="upload-sub">Groq Whisper transcribe el audio</div>
-            <div class="upload-name" id="videoFileName"></div>
-          </div>
-        </div>
-        <div class="field">
           <label>Google Sheets — Link público</label>
-          <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
-          <span style="font-size:11px;color:var(--muted);margin-top:2px;">Debe ser "cualquiera con el link puede ver"</span>
+          <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="onSheetUrlChange()"/>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+            <span style="font-size:11px;color:var(--muted);">"Cualquiera con el link puede ver"</span>
+            <button class="btn-sm" onclick="previewSheet()" style="padding:3px 8px;font-size:11px;">Verificar</button>
+          </div>
+          <div id="sheetStatus" style="margin-top:5px;"></div>
+        </div>
+        <div id="videoSection">
+          <div class="field">
+            <label id="videoLabel">Video (opcional — para detectar duración)</label>
+            <div class="upload-zone" id="videoZone">
+              <input type="file" id="videoFile" accept="video/*,audio/*" onchange="onVideoSelect(this)">
+              <div class="upload-title" id="videoZoneTitle">Selecciona o arrastra el video</div>
+              <div class="upload-sub" id="videoZoneSub">Se usará para detectar duración exacta</div>
+              <div class="upload-name" id="videoFileName"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -153,7 +172,7 @@
       <div class="section-label">Idiomas destino</div>
       <div class="lang-tags" id="langTags"></div>
       <div class="add-lang">
-        <input type="text" id="newLang" placeholder="Ej: Francés, Italiano..." maxlength="30" />
+        <input type="text" id="newLang" placeholder="Ej: Francés, Italiano..." maxlength="30"/>
         <button class="btn-sm" onclick="addLang()">+ Agregar</button>
       </div>
     </div>
@@ -163,13 +182,10 @@
     <div>
       <div class="section-label">Tipografía AE</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="field">
-          <label>Nombre de la fuente (exacto en AE)</label>
-          <input type="text" id="fontName" value="Arial" placeholder="Ej: Neue Haas Grotesk Display" />
-        </div>
+        <div class="field"><label>Nombre de la fuente (exacto en AE)</label><input type="text" id="fontName" value="Arial" placeholder="Ej: Neue Haas Grotesk Display"/></div>
         <div class="grid-2">
-          <div class="field"><label>Tamaño (px)</label><input type="number" id="fontSize" value="60" min="10" max="300" /></div>
-          <div class="field"><label>Interlineado</label><input type="number" id="leading" value="70" min="10" max="300" /></div>
+          <div class="field"><label>Tamaño (px)</label><input type="number" id="fontSize" value="60" min="10" max="300"/></div>
+          <div class="field"><label>Interlineado</label><input type="number" id="leading" value="70" min="10" max="300"/></div>
         </div>
         <div class="field">
           <label>Color texto</label>
@@ -179,8 +195,8 @@
           </div>
         </div>
         <div class="grid-2">
-          <div class="field"><label>Máx chars / línea</label><input type="number" id="maxChars" value="50" min="10" max="120" /></div>
-          <div class="field"><label>Posición Y desde abajo</label><input type="number" id="posYOffset" value="100" min="0" max="500" /></div>
+          <div class="field"><label>Máx chars / línea</label><input type="number" id="maxChars" value="50" min="10" max="120"/></div>
+          <div class="field"><label>Pos. Y desde abajo (px)</label><input type="number" id="posYOffset" value="100" min="0" max="500"/></div>
         </div>
       </div>
     </div>
@@ -189,25 +205,10 @@
 
     <div>
       <div class="section-label">Trazo</div>
-      <div class="toggle-row">
-        <span class="toggle-label">Activar trazo</span>
-        <label class="toggle"><input type="checkbox" id="strokeOn" checked onchange="toggleEl('strokeOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label>
-      </div>
+      <div class="toggle-row"><span class="toggle-label">Activar trazo</span><label class="toggle"><input type="checkbox" id="strokeOn" checked onchange="toggleEl('strokeOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label></div>
       <div id="strokeOpts" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
-        <div class="field">
-          <label>Color trazo</label>
-          <div class="color-row">
-            <input type="color" id="strokeColor" value="#000000" oninput="syncHex('strokeColor','strokeColorHex');updatePreview()">
-            <input type="text" id="strokeColorHex" value="#000000" style="flex:1;" oninput="syncPicker('strokeColorHex','strokeColor');updatePreview()">
-          </div>
-        </div>
-        <div class="field">
-          <label>Grosor</label>
-          <div class="range-row">
-            <input type="range" id="strokeWidth" min="0.5" max="10" step="0.5" value="2" oninput="document.getElementById('strokeWidthVal').textContent=this.value+'px';updatePreview()">
-            <span class="range-val" id="strokeWidthVal">2px</span>
-          </div>
-        </div>
+        <div class="field"><label>Color trazo</label><div class="color-row"><input type="color" id="strokeColor" value="#000000" oninput="syncHex('strokeColor','strokeColorHex');updatePreview()"><input type="text" id="strokeColorHex" value="#000000" style="flex:1;" oninput="syncPicker('strokeColorHex','strokeColor');updatePreview()"></div></div>
+        <div class="field"><label>Grosor</label><div class="range-row"><input type="range" id="strokeWidth" min="0.5" max="10" step="0.5" value="2" oninput="document.getElementById('strokeWidthVal').textContent=this.value+'px';updatePreview()"><span class="range-val" id="strokeWidthVal">2px</span></div></div>
       </div>
     </div>
 
@@ -215,440 +216,348 @@
 
     <div>
       <div class="section-label">Sombra</div>
-      <div class="toggle-row">
-        <span class="toggle-label">Activar sombra</span>
-        <label class="toggle"><input type="checkbox" id="shadowOn" onchange="toggleEl('shadowOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label>
-      </div>
+      <div class="toggle-row"><span class="toggle-label">Activar sombra</span><label class="toggle"><input type="checkbox" id="shadowOn" onchange="toggleEl('shadowOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label></div>
       <div id="shadowOpts" style="display:none;flex-direction:column;gap:10px;margin-top:10px;">
-        <div class="field">
-          <label>Color sombra</label>
-          <div class="color-row"><input type="color" id="shadowColor" value="#000000" oninput="updatePreview()"></div>
-        </div>
-        <div class="field">
-          <label>Opacidad</label>
-          <div class="range-row">
-            <input type="range" id="shadowOpacity" min="0" max="100" step="5" value="75" oninput="document.getElementById('shadowOpacityVal').textContent=this.value+'%';updatePreview()">
-            <span class="range-val" id="shadowOpacityVal">75%</span>
-          </div>
-        </div>
+        <div class="field"><label>Color sombra</label><div class="color-row"><input type="color" id="shadowColor" value="#000000" oninput="updatePreview()"></div></div>
+        <div class="field"><label>Opacidad</label><div class="range-row"><input type="range" id="shadowOpacity" min="0" max="100" step="5" value="75" oninput="document.getElementById('shadowOpacityVal').textContent=this.value+'%';updatePreview()"><span class="range-val" id="shadowOpacityVal">75%</span></div></div>
         <div class="grid-2">
           <div class="field"><label>Distancia</label><input type="number" id="shadowDist" value="4" min="0" max="50" oninput="updatePreview()"></div>
           <div class="field"><label>Difusión</label><input type="number" id="shadowBlur" value="6" min="0" max="50" oninput="updatePreview()"></div>
         </div>
-        <div class="field">
-          <label>Ángulo</label>
-          <div class="range-row">
-            <input type="range" id="shadowAngle" min="0" max="360" step="5" value="135" oninput="document.getElementById('shadowAngleVal').textContent=this.value+'°';updatePreview()">
-            <span class="range-val" id="shadowAngleVal">135°</span>
-          </div>
-        </div>
+        <div class="field"><label>Ángulo</label><div class="range-row"><input type="range" id="shadowAngle" min="0" max="360" step="5" value="135" oninput="document.getElementById('shadowAngleVal').textContent=this.value+'°';updatePreview()"><span class="range-val" id="shadowAngleVal">135°</span></div></div>
       </div>
     </div>
 
   </div>
 
   <div class="main">
-
     <div>
       <div class="section-label">Vista previa de estilo</div>
-      <div class="subtitle-preview">
-        <div class="sub-preview-text" id="previewText">Bienvenidos a S127.<br>Nos emociona que nos acompañen.</div>
-      </div>
+      <div class="subtitle-preview"><div class="sub-preview-text" id="previewText">Bienvenidos a S127.<br>Nos emociona que nos acompañen.</div></div>
     </div>
-
     <div>
       <div class="step-indicator">
-        <div class="step" id="step1">1 · transcribir</div>
+        <div class="step" id="step1">1 · texto/audio</div>
         <div class="step" id="step2">2 · leer sheet</div>
         <div class="step" id="step3">3 · traducir</div>
         <div class="step" id="step4">4 · generar jsx</div>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     </div>
-
     <button class="btn-primary" id="runBtn" onclick="runPipeline()">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polygon points="2,1 12,6.5 2,12" fill="currentColor"/></svg>
       Generar subtítulos
     </button>
-
-    <div>
-      <div class="section-label">Log</div>
-      <div class="log-panel" id="logPanel"><span class="log-empty">Listo. Configura y presiona Generar.</span></div>
-    </div>
-
-    <div id="resultsSection" style="display:none;">
-      <div class="section-label" style="margin-bottom:8px;">Archivos generados</div>
-      <div class="results-grid" id="resultsGrid"></div>
-    </div>
-
+    <div><div class="section-label">Log</div><div class="log-panel" id="logPanel"><span class="log-empty">Listo. Configura y presiona Generar.</span></div></div>
+    <div id="resultsSection" style="display:none;"><div class="section-label" style="margin-bottom:8px;">Archivos generados</div><div class="results-grid" id="resultsGrid"></div></div>
   </div>
 </div>
 
 <script>
-let activeLangs = [
-  { code: 'es', label: 'Español (LATAM)' },
-  { code: 'pt', label: 'Portugués (BR)' }
-];
-let videoFileObj = null;
-let generatedFiles = {};
+let activeLangs=[{code:'es',label:'Español (LATAM)'},{code:'pt',label:'Portugués (BR)'}];
+let currentMode='sheet';
+let videoFileObj=null;
+let generatedFiles={};
+let sheetRowsCache=null;
 
-function renderLangTags() {
-  document.getElementById('langTags').innerHTML = activeLangs.map((l,i) => `
-    <div class="lang-tag"><span>${l.label}</span><button onclick="removeLang(${i})">×</button></div>`).join('');
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('modeSheetCard').classList.toggle('active',mode==='sheet');
+  document.getElementById('modeWhisperCard').classList.toggle('active',mode==='whisper');
+  const note=document.getElementById('modeNote');
+  const lbl=document.getElementById('videoLabel');
+  const sub=document.getElementById('videoZoneSub');
+  const title=document.getElementById('videoZoneTitle');
+  if(mode==='sheet'){
+    note.innerHTML='<div class="note-green">El Sheet tiene texto EN → tiempos proporcionales. Sin límite de tamaño. Carga el video solo para detectar su duración exacta.</div>';
+    lbl.textContent='Video (opcional — para detectar duración exacta)';
+    title.textContent='Arrastra el video (no se sube a ningún servidor)';
+    sub.textContent='Solo se lee la duración localmente';
+    document.getElementById('step1').textContent='1 · texto del sheet';
+  } else {
+    note.innerHTML='<div class="note-orange">Whisper transcribirá el audio para tiempos reales. El video se sube a Groq (máx 25MB). Para videos más grandes usa modo "Texto del Sheet".</div>';
+    lbl.textContent='Video (requerido — se envía a Groq Whisper, máx 25MB)';
+    title.textContent='Selecciona o arrastra el video';
+    sub.textContent='Groq Whisper transcribe el audio en inglés';
+    document.getElementById('step1').textContent='1 · transcribir audio';
+  }
 }
-function addLang() {
-  const inp = document.getElementById('newLang');
-  const val = inp.value.trim();
-  if (!val) return;
-  activeLangs.push({ code: val.toLowerCase().replace(/\s+/g,'_'), label: val });
-  inp.value = '';
-  renderLangTags();
-}
-function removeLang(i) { activeLangs.splice(i,1); renderLangTags(); }
 
-function onVideoSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  videoFileObj = file;
-  document.getElementById('videoFileName').textContent = file.name + ' (' + (file.size/1024/1024).toFixed(1) + 'MB)';
-  document.getElementById('videoZone').style.borderColor = 'var(--accent)';
+function renderLangTags(){document.getElementById('langTags').innerHTML=activeLangs.map((l,i)=>`<div class="lang-tag"><span>${l.label}</span><button onclick="removeLang(${i})">×</button></div>`).join('');}
+function addLang(){const inp=document.getElementById('newLang');const val=inp.value.trim();if(!val)return;activeLangs.push({code:val.toLowerCase().replace(/\s+/g,'_'),label:val});inp.value='';renderLangTags();}
+function removeLang(i){activeLangs.splice(i,1);renderLangTags();}
+
+function onVideoSelect(input){
+  const file=input.files[0];if(!file)return;
+  videoFileObj=file;
+  const size=(file.size/1024/1024).toFixed(1);
+  const nameEl=document.getElementById('videoFileName');
+  nameEl.textContent=`${file.name} (${size}MB)`;
+  document.getElementById('videoZone').classList.add('ready');
+  if(currentMode==='whisper'&&file.size>25*1024*1024){nameEl.style.color='var(--orange)';nameEl.textContent+=` ⚠ supera 25MB — usa modo "Texto del Sheet"`;}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const zone = document.getElementById('videoZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag');
-    const file = e.dataTransfer.files[0];
-    if (file) { videoFileObj = file; document.getElementById('videoFileName').textContent = file.name + ' (' + (file.size/1024/1024).toFixed(1) + 'MB)'; zone.style.borderColor = 'var(--accent)'; }
+document.addEventListener('DOMContentLoaded',()=>{
+  const zone=document.getElementById('videoZone');
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('drag');
+    const file=e.dataTransfer.files[0];
+    if(file){videoFileObj=file;document.getElementById('videoFileName').textContent=file.name+' ('+(file.size/1024/1024).toFixed(1)+'MB)';document.getElementById('videoZone').classList.add('ready');}
   });
+  setMode('sheet');
 });
 
-function toggleEl(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-function hexToRgb01(hex) {
-  hex = hex.replace('#','');
-  if (hex.length===3) hex = hex.split('').map(c=>c+c).join('');
-  const n = parseInt(hex,16);
-  return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255];
-}
-function syncHex(pickerId, hexId) { document.getElementById(hexId).value = document.getElementById(pickerId).value; }
-function syncPicker(hexId, pickerId) {
-  const h = document.getElementById(hexId).value;
-  if (/^#[0-9a-fA-F]{6}$/.test(h)) document.getElementById(pickerId).value = h;
+function onSheetUrlChange(){sheetRowsCache=null;document.getElementById('sheetStatus').innerHTML='';}
+
+async function previewSheet(){
+  const url=document.getElementById('sheetUrl').value.trim();if(!url)return;
+  const statusEl=document.getElementById('sheetStatus');
+  statusEl.innerHTML='<span style="font-size:11px;color:var(--muted);">Verificando...</span>';
+  try{
+    const rows=await fetchSheetData(extractSheetId(url));
+    sheetRowsCache=rows;
+    const enCount=rows.filter(r=>r[0]?.trim()).length;
+    const hasEs=rows.some(r=>r[1]?.trim());
+    const hasPt=rows.some(r=>r[2]?.trim());
+    let html='<div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">';
+    html+=`<span class="status-badge detected"><span class="dot"></span>${enCount} bloques EN detectados</span>`;
+    html+=hasEs?'<span class="status-badge detected"><span class="dot"></span>Columna ES disponible</span>':'<span class="status-badge missing"><span class="dot"></span>Sin ES — Groq traducirá</span>';
+    html+=hasPt?'<span class="status-badge detected"><span class="dot"></span>Columna PT disponible</span>':'<span class="status-badge missing"><span class="dot"></span>Sin PT — Groq traducirá</span>';
+    html+='</div>';
+    if(enCount>0&&currentMode==='whisper') html+='<div class="note-green" style="margin-top:6px;font-size:11px;">Tip: El Sheet tiene texto EN. Cambia a modo "Texto del Sheet" — no necesitas subir el video.</div>';
+    statusEl.innerHTML=html;
+  }catch(e){statusEl.innerHTML=`<span style="font-size:11px;color:var(--red);">${e.message}</span>`;}
 }
 
-function log(msg, type='') {
-  const panel = document.getElementById('logPanel');
-  const now = new Date();
-  const ts = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-  if (panel.querySelector('.log-empty')) panel.innerHTML = '';
-  const line = document.createElement('div');
-  line.className = 'log-line ' + type;
-  line.innerHTML = `<span class="ts">${ts}</span><span class="msg">${msg}</span>`;
-  panel.appendChild(line);
-  panel.scrollTop = panel.scrollHeight;
+function toggleEl(id,show){document.getElementById(id).style.display=show?'flex':'none';}
+function hexToRgb01(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
+function syncHex(pid,hid){document.getElementById(hid).value=document.getElementById(pid).value;}
+function syncPicker(hid,pid){const h=document.getElementById(hid).value;if(/^#[0-9a-fA-F]{6}$/.test(h))document.getElementById(pid).value=h;}
+
+function log(msg,type=''){
+  const panel=document.getElementById('logPanel');
+  const now=new Date();
+  const ts=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  if(panel.querySelector('.log-empty'))panel.innerHTML='';
+  const line=document.createElement('div');
+  line.className='log-line '+type;
+  line.innerHTML=`<span class="ts">${ts}</span><span class="msg">${msg}</span>`;
+  panel.appendChild(line);panel.scrollTop=panel.scrollHeight;
+}
+function setStep(n){['step1','step2','step3','step4'].forEach((id,i)=>{document.getElementById(id).className='step'+(i+1<n?' done':i+1===n?' active':'');});document.getElementById('progressFill').style.width=((n-1)*25)+'%';}
+
+function updatePreview(){
+  const text=document.getElementById('previewText');
+  const fc=document.getElementById('fontColor').value;
+  const strokeOn=document.getElementById('strokeOn').checked;
+  const sc=document.getElementById('strokeColor').value;
+  const sw=parseFloat(document.getElementById('strokeWidth').value);
+  const shadowOn=document.getElementById('shadowOn').checked;
+  const sColor=document.getElementById('shadowColor').value;
+  const sOpacity=parseInt(document.getElementById('shadowOpacity').value)/100;
+  const sDist=parseInt(document.getElementById('shadowDist').value);
+  const sBlur=parseInt(document.getElementById('shadowBlur').value);
+  const sAngle=parseInt(document.getElementById('shadowAngle').value);
+  text.style.color=fc;
+  const shadows=[];
+  if(strokeOn)shadows.push(`-${sw}px -${sw}px 0 ${sc}`,`${sw}px -${sw}px 0 ${sc}`,`-${sw}px ${sw}px 0 ${sc}`,`${sw}px ${sw}px 0 ${sc}`);
+  if(shadowOn){const rad=(sAngle-180)*Math.PI/180;const dx=Math.round(Math.cos(rad)*sDist),dy=Math.round(Math.sin(rad)*sDist);const alpha=Math.round(sOpacity*255).toString(16).padStart(2,'0');shadows.push(`${dx}px ${dy}px ${sBlur}px ${sColor}${alpha}`);}
+  text.style.textShadow=shadows.length?shadows.join(', '):'none';
 }
 
-function setStep(n) {
-  ['step1','step2','step3','step4'].forEach((id,i) => {
-    document.getElementById(id).className = 'step' + (i+1<n?' done':i+1===n?' active':'');
-  });
-  document.getElementById('progressFill').style.width = ((n-1)*25)+'%';
-}
-
-function updatePreview() {
-  const text = document.getElementById('previewText');
-  const fc = document.getElementById('fontColor').value;
-  const strokeOn = document.getElementById('strokeOn').checked;
-  const sc = document.getElementById('strokeColor').value;
-  const sw = parseFloat(document.getElementById('strokeWidth').value);
-  const shadowOn = document.getElementById('shadowOn').checked;
-  const sColor = document.getElementById('shadowColor').value;
-  const sOpacity = parseInt(document.getElementById('shadowOpacity').value)/100;
-  const sDist = parseInt(document.getElementById('shadowDist').value);
-  const sBlur = parseInt(document.getElementById('shadowBlur').value);
-  const sAngle = parseInt(document.getElementById('shadowAngle').value);
-  text.style.color = fc;
-  const shadows = [];
-  if (strokeOn) { shadows.push(`-${sw}px -${sw}px 0 ${sc}`,`${sw}px -${sw}px 0 ${sc}`,`-${sw}px ${sw}px 0 ${sc}`,`${sw}px ${sw}px 0 ${sc}`); }
-  if (shadowOn) {
-    const rad = (sAngle-180)*Math.PI/180;
-    const dx = Math.round(Math.cos(rad)*sDist);
-    const dy = Math.round(Math.sin(rad)*sDist);
-    const alpha = Math.round(sOpacity*255).toString(16).padStart(2,'0');
-    shadows.push(`${dx}px ${dy}px ${sBlur}px ${sColor}${alpha}`);
-  }
-  text.style.textShadow = shadows.length ? shadows.join(', ') : 'none';
-}
-
-async function transcribeWithGroq(file, groqKey) {
-  if (file.size > 25*1024*1024) throw new Error(`Archivo demasiado grande (${(file.size/1024/1024).toFixed(1)}MB). Groq acepta máx 25MB. Comprime el video o extrae solo el audio.`);
-  log('Enviando audio a Groq Whisper large-v3... (puede tardar ~30s)');
-  const form = new FormData();
-  form.append('file', file, file.name);
-  form.append('model', 'whisper-large-v3');
-  form.append('language', 'en');
-  form.append('response_format', 'verbose_json');
-  form.append('timestamp_granularities[]', 'segment');
-  const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { 'authorization': `Bearer ${groqKey}` },
-    body: form
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({}));
-    throw new Error('Groq Whisper: ' + (err.error?.message || res.status));
-  }
-  const data = await res.json();
-  log(`Transcripción lista: ${data.segments?.length || '?'} segmentos, ${data.text?.split(' ').length || '?'} palabras`, 'ok');
+async function transcribeWithGroq(file,groqKey){
+  if(file.size>25*1024*1024)throw new Error(`El archivo pesa ${(file.size/1024/1024).toFixed(1)}MB. Groq acepta máx 25MB. Usa el modo "Texto del Sheet" si ya tienes el texto en inglés.`);
+  log(`Enviando a Groq Whisper large-v3 (${(file.size/1024/1024).toFixed(1)}MB)...`);
+  const form=new FormData();
+  form.append('file',file,file.name);form.append('model','whisper-large-v3');form.append('language','en');form.append('response_format','verbose_json');form.append('timestamp_granularities[]','segment');
+  const res=await fetch('https://api.groq.com/openai/v1/audio/transcriptions',{method:'POST',headers:{'authorization':`Bearer ${groqKey}`},body:form});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error('Groq Whisper: '+(e.error?.message||res.status));}
+  const data=await res.json();
+  log(`Transcripción lista: ${data.segments?.length||'?'} segmentos`,'ok');
   return data;
 }
 
-async function translateText(text, targetLang, groqKey) {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'authorization': `Bearer ${groqKey}` },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 1000,
-      messages: [
-        { role: 'system', content: 'Professional subtitle translator. Return ONLY the translated text. No explanations, no quotes. Keep it concise and natural for video subtitles.' },
-        { role: 'user', content: `Translate to ${targetLang}:\n\n${text}` }
-      ]
-    })
+async function translateText(text,targetLang,groqKey){
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${groqKey}`},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:[{role:'system',content:'Professional subtitle translator. Return ONLY the translated text. No explanations, no quotes. Concise and natural for video subtitles.'},{role:'user',content:`Translate to ${targetLang}:\n\n${text}`}]})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error('Groq LLaMA: '+(e.error?.message||res.status));}
+  return (await res.json()).choices[0].message.content.trim();
+}
+
+function extractSheetId(url){const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:null;}
+async function fetchSheetData(sheetId){
+  const res=await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`);
+  if(!res.ok)throw new Error('No se pudo leer el Sheet. Verifica que sea público.');
+  return (await res.text()).split('\n').map(row=>{const cols=[];let cur='',inQ=false;for(let i=0;i<row.length;i++){if(row[i]==='"'){inQ=!inQ;continue;}if(row[i]===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=row[i];}cols.push(cur.trim());return cols;}).filter(r=>r.some(c=>c)).slice(1);
+}
+
+function wrapText(text,maxChars){const words=text.split(' ');const lines=[];let cur='';for(const w of words){if((cur+' '+w).trim().length<=maxChars){cur=(cur+' '+w).trim();}else{if(cur)lines.push(cur);cur=w;}}if(cur)lines.push(cur);const blocks=[];for(let i=0;i<lines.length;i+=2)blocks.push(lines.slice(i,i+2).join('\n'));return blocks.length?blocks:[text];}
+
+function buildFromSheet(enTexts,translated,maxChars,totalDuration){
+  const totalWords=enTexts.reduce((s,t)=>s+t.split(' ').length,0);
+  let cursor=0;const subs=[];
+  enTexts.forEach((en,pi)=>{
+    const wc=en.split(' ').length;const pStart=cursor;const pEnd=cursor+(wc/totalWords)*totalDuration;cursor=pEnd;
+    const blocks=wrapText(translated[pi]||en,maxChars);const bd=(pEnd-pStart)/blocks.length;
+    blocks.forEach((b,bi)=>subs.push({start:Math.round((pStart+bi*bd)*1000)/1000,end:Math.round((pStart+(bi+1)*bd)*1000)/1000,text:b.trim()}));
   });
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({}));
-    throw new Error('Groq LLaMA: ' + (err.error?.message || res.status));
-  }
-  const data = await res.json();
-  return data.choices[0].message.content.trim();
+  return subs;
 }
 
-function extractSheetId(url) {
-  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-  return m ? m[1] : null;
-}
-
-async function fetchSheetData(sheetId) {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('No se pudo leer el Sheet. Verifica que sea público.');
-  const csv = await res.text();
-  return csv.split('\n').map(row => {
-    const cols = []; let cur = '', inQ = false;
-    for (let i = 0; i < row.length; i++) {
-      if (row[i]==='"') { inQ=!inQ; continue; }
-      if (row[i]===',' && !inQ) { cols.push(cur.trim()); cur=''; } else cur+=row[i];
-    }
-    cols.push(cur.trim());
-    return cols;
-  }).filter(r => r.some(c=>c)).slice(1);
-}
-
-function wrapText(text, maxChars) {
-  const words = text.split(' ');
-  const lines = []; let cur = '';
-  for (const w of words) {
-    if ((cur+' '+w).trim().length <= maxChars) { cur=(cur+' '+w).trim(); }
-    else { if (cur) lines.push(cur); cur=w; }
-  }
-  if (cur) lines.push(cur);
-  const blocks = [];
-  for (let i=0; i<lines.length; i+=2) blocks.push(lines.slice(i,i+2).join('\n'));
-  return blocks.length ? blocks : [text];
-}
-
-function buildSubtitles(transcript, enTexts, translatedTexts, maxChars) {
-  const segments = transcript.segments || [];
-  if (!segments.length) throw new Error('No hay segmentos de tiempo en la transcripción.');
-  const totalDuration = segments[segments.length-1].end;
-  const segsPerPara = Math.max(1, Math.floor(segments.length / enTexts.length));
-  const subtitles = [];
-  enTexts.forEach((enText, pi) => {
-    const s0 = pi * segsPerPara;
-    const s1 = Math.min((pi+1)*segsPerPara, segments.length);
-    const paraSegs = segments.slice(s0, s1);
-    const pStart = paraSegs[0]?.start ?? (pi/enTexts.length*totalDuration);
-    const pEnd = paraSegs[paraSegs.length-1]?.end ?? ((pi+1)/enTexts.length*totalDuration);
-    const targetText = translatedTexts[pi] || enText;
-    const blocks = wrapText(targetText, maxChars);
-    const blockDur = (pEnd-pStart)/blocks.length;
-    blocks.forEach((block, bi) => {
-      subtitles.push({ start: Math.round((pStart+bi*blockDur)*1000)/1000, end: Math.round((pStart+(bi+1)*blockDur)*1000)/1000, text: block.trim() });
-    });
+function buildFromWhisper(transcript,enTexts,translated,maxChars){
+  const segments=transcript.segments||[];if(!segments.length)throw new Error('Sin segmentos de tiempo.');
+  const totalDuration=segments[segments.length-1].end;const spp=Math.max(1,Math.floor(segments.length/enTexts.length));const subs=[];
+  enTexts.forEach((en,pi)=>{
+    const s0=pi*spp,s1=Math.min((pi+1)*spp,segments.length);const ps=segments.slice(s0,s1);
+    const pStart=ps[0]?.start??(pi/enTexts.length*totalDuration);const pEnd=ps[ps.length-1]?.end??((pi+1)/enTexts.length*totalDuration);
+    const blocks=wrapText(translated[pi]||en,maxChars);const bd=(pEnd-pStart)/blocks.length;
+    blocks.forEach((b,bi)=>subs.push({start:Math.round((pStart+bi*bd)*1000)/1000,end:Math.round((pStart+(bi+1)*bd)*1000)/1000,text:b.trim()}));
   });
-  return subtitles;
+  return subs;
 }
 
-function generateJSX(subtitles, langLabel, style) {
-  const lines = [];
-  lines.push(`// LDMVideoSubGenerator v2.0 — ${langLabel}`);
-  lines.push(`// Groq Whisper large-v3 (transcripcion) + LLaMA 3.3 70b (traduccion)`);
-  lines.push(`// Archivo → Scripts → Ejecutar archivo de script...`);
-  lines.push('');
-  lines.push('(function() {');
-  lines.push('  var comp = app.project.activeItem;');
-  lines.push('  if (!comp || !(comp instanceof CompItem)) { alert("Selecciona una composicion primero."); return; }');
-  lines.push(`  app.beginUndoGroup("Subtitulos ${langLabel}");`);
-  lines.push('  var PX = comp.width / 2;');
-  lines.push(`  var PY = comp.height - ${style.posYOffset};`);
-  lines.push('');
-  subtitles.forEach((sub, i) => {
-    const txt = sub.text.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n');
-    const preview = sub.text.replace(/\n/g,' ').substring(0,35);
-    const num = String(i+1).padStart(3,'0');
-    lines.push(`  // ${num}: ${preview}`);
-    lines.push(`  (function() {`);
-    lines.push(`    var l = comp.layers.addText("${txt}");`);
-    lines.push(`    l.name = "${num} | ${preview}";`);
-    lines.push(`    l.label = ${4+(style.langIndex%8)};`);
-    lines.push(`    l.inPoint  = ${sub.start};`);
-    lines.push(`    l.outPoint = ${sub.end};`);
-    lines.push(`    var st = l.property("Source Text");`);
-    lines.push(`    var td = st.value;`);
-    lines.push(`    td.font          = "${style.fontName}";`);
-    lines.push(`    td.fontSize      = ${style.fontSize};`);
-    lines.push(`    td.fillColor     = [${style.fontColor.join(',')}];`);
-    lines.push(`    td.justification = ParagraphJustification.CENTER_JUSTIFY;`);
-    lines.push(`    td.leading       = ${style.leading};`);
-    if (style.strokeOn) {
-      lines.push(`    td.applyStroke    = true;`);
-      lines.push(`    td.strokeOverFill = true;`);
-      lines.push(`    td.strokeColor    = [${style.strokeColor.join(',')}];`);
-      lines.push(`    td.strokeWidth    = ${style.strokeWidth};`);
-    } else {
-      lines.push(`    td.applyStroke = false;`);
+function generateJSX(subtitles,langLabel,style,sourceNote){
+  const L=[];
+  L.push(`// LDMVideoSubGenerator v3.0 — ${langLabel}`);
+  L.push(`// ${sourceNote}`);
+  L.push(`// Archivo → Scripts → Ejecutar archivo de script...`,'');
+  L.push('(function() {');
+  L.push('  var comp = app.project.activeItem;');
+  L.push('  if (!comp || !(comp instanceof CompItem)) { alert("Selecciona una composicion primero."); return; }');
+  L.push(`  app.beginUndoGroup("Subtitulos ${langLabel}");`);
+  L.push('  var PX = comp.width / 2;');
+  L.push(`  var PY = comp.height - ${style.posYOffset};`,'');
+  subtitles.forEach((sub,i)=>{
+    const txt=sub.text.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n');
+    const preview=sub.text.replace(/\n/g,' ').substring(0,35);
+    const num=String(i+1).padStart(3,'0');
+    L.push(`  // ${num}: ${preview}`);
+    L.push(`  (function() {`);
+    L.push(`    var l=comp.layers.addText("${txt}");`);
+    L.push(`    l.name="${num} | ${preview}";l.label=${4+(style.langIndex%8)};`);
+    L.push(`    l.inPoint=${sub.start};l.outPoint=${sub.end};`);
+    L.push(`    var st=l.property("Source Text");var td=st.value;`);
+    L.push(`    td.font="${style.fontName}";td.fontSize=${style.fontSize};td.fillColor=[${style.fontColor.join(',')}];`);
+    L.push(`    td.justification=ParagraphJustification.CENTER_JUSTIFY;td.leading=${style.leading};`);
+    if(style.strokeOn)L.push(`    td.applyStroke=true;td.strokeOverFill=true;td.strokeColor=[${style.strokeColor.join(',')}];td.strokeWidth=${style.strokeWidth};`);
+    else L.push(`    td.applyStroke=false;`);
+    L.push(`    st.setValue(td);`);
+    L.push(`    l.property("Transform").property("Position").setValue([PX,PY]);`);
+    if(style.shadowOn){
+      const sc=style.shadowColor;
+      L.push(`    try{var ds=l("Effects").addProperty("ADBE Drop Shadow");`);
+      L.push(`      ds.property("ADBE Drop Shadow-0001").setValue([${sc[0].toFixed(3)},${sc[1].toFixed(3)},${sc[2].toFixed(3)},${style.shadowOpacity.toFixed(3)}]);`);
+      L.push(`      ds.property("ADBE Drop Shadow-0002").setValue(${Math.round(style.shadowOpacity*100)});`);
+      L.push(`      ds.property("ADBE Drop Shadow-0003").setValue(${style.shadowAngle});`);
+      L.push(`      ds.property("ADBE Drop Shadow-0004").setValue(${style.shadowDist});`);
+      L.push(`      ds.property("ADBE Drop Shadow-0005").setValue(${style.shadowBlur});`);
+      L.push(`    }catch(e){}`);
     }
-    lines.push(`    st.setValue(td);`);
-    lines.push(`    l.property("Transform").property("Position").setValue([PX, PY]);`);
-    if (style.shadowOn) {
-      const sc = style.shadowColor;
-      lines.push(`    try {`);
-      lines.push(`      var ds = l("Effects").addProperty("ADBE Drop Shadow");`);
-      lines.push(`      ds.property("ADBE Drop Shadow-0001").setValue([${sc[0].toFixed(3)},${sc[1].toFixed(3)},${sc[2].toFixed(3)},${style.shadowOpacity.toFixed(3)}]);`);
-      lines.push(`      ds.property("ADBE Drop Shadow-0002").setValue(${Math.round(style.shadowOpacity*100)});`);
-      lines.push(`      ds.property("ADBE Drop Shadow-0003").setValue(${style.shadowAngle});`);
-      lines.push(`      ds.property("ADBE Drop Shadow-0004").setValue(${style.shadowDist});`);
-      lines.push(`      ds.property("ADBE Drop Shadow-0005").setValue(${style.shadowBlur});`);
-      lines.push(`    } catch(e) {}`);
-    }
-    lines.push(`  })();`);
-    lines.push('');
+    L.push(`  })();`,'');
   });
-  lines.push(`  app.endUndoGroup();`);
-  lines.push(`  alert("✅ ${subtitles.length} subtitulos ${langLabel} agregados.\\n\\nFuente: ${style.fontName}\\nRevisa y ajusta tiempos en el timeline si necesitas.");`);
-  lines.push('})();');
-  return lines.join('\n');
+  L.push(`  app.endUndoGroup();`);
+  L.push(`  alert("✅ ${subtitles.length} subtitulos ${langLabel} agregados.\\nFuente: ${style.fontName}\\n\\nRevisa y ajusta tiempos en el timeline si necesitas.");`);
+  L.push('})();');
+  return L.join('\n');
 }
 
-function downloadFile(filename) {
-  const blob = new Blob([generatedFiles[filename]], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-}
+function downloadFile(filename){const blob=new Blob([generatedFiles[filename]],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
 
-function addResultCard(langLabel, filename, count) {
-  document.getElementById('resultsSection').style.display = 'block';
-  const card = document.createElement('div');
-  card.className = 'result-card';
-  card.innerHTML = `
-    <div class="result-lang">${langLabel}</div>
-    <div class="result-name">${filename}</div>
-    <div class="result-count">${count} subtítulos · Groq Whisper</div>
-    <button class="btn-download" onclick="downloadFile('${filename}')">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Descargar .jsx
-    </button>`;
+function addResultCard(langLabel,filename,count,meta){
+  document.getElementById('resultsSection').style.display='block';
+  const card=document.createElement('div');card.className='result-card';
+  card.innerHTML=`<div class="result-lang">${langLabel}</div><div class="result-name">${filename}</div><div class="result-meta">${count} subtítulos · ${meta}</div><button class="btn-download" onclick="downloadFile('${filename}')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Descargar .jsx</button>`;
   document.getElementById('resultsGrid').appendChild(card);
 }
 
-async function runPipeline() {
-  const groqKey  = document.getElementById('groqKey').value.trim();
-  const sheetUrl = document.getElementById('sheetUrl').value.trim();
-  if (!groqKey)      { log('Falta la Groq API Key', 'err'); return; }
-  if (!videoFileObj) { log('Selecciona el video primero', 'err'); return; }
-  if (!sheetUrl)     { log('Falta el link del Google Sheet', 'err'); return; }
-  if (!activeLangs.length) { log('Agrega al menos un idioma destino', 'err'); return; }
+function getVideoDuration(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(url);res(v.duration);};v.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('No se pudo leer'));};v.src=url;});}
 
-  const btn = document.getElementById('runBtn');
-  btn.disabled = true;
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('resultsGrid').innerHTML = '';
-  generatedFiles = {};
+async function runPipeline(){
+  const groqKey=document.getElementById('groqKey').value.trim();
+  const sheetUrl=document.getElementById('sheetUrl').value.trim();
+  if(!groqKey){log('Falta la Groq API Key','err');return;}
+  if(!sheetUrl){log('Falta el link del Google Sheet','err');return;}
+  if(!activeLangs.length){log('Agrega al menos un idioma destino','err');return;}
+  if(currentMode==='whisper'&&!videoFileObj){log('Selecciona el video para transcribir','err');return;}
 
-  const style = {
-    fontName:      document.getElementById('fontName').value || 'Arial',
-    fontSize:      parseInt(document.getElementById('fontSize').value),
-    leading:       parseInt(document.getElementById('leading').value),
-    fontColor:     hexToRgb01(document.getElementById('fontColor').value),
-    strokeOn:      document.getElementById('strokeOn').checked,
-    strokeColor:   hexToRgb01(document.getElementById('strokeColor').value),
-    strokeWidth:   parseFloat(document.getElementById('strokeWidth').value),
-    shadowOn:      document.getElementById('shadowOn').checked,
-    shadowColor:   hexToRgb01(document.getElementById('shadowColor').value),
-    shadowOpacity: parseFloat(document.getElementById('shadowOpacity').value)/100,
-    shadowDist:    parseInt(document.getElementById('shadowDist').value),
-    shadowBlur:    parseInt(document.getElementById('shadowBlur').value),
-    shadowAngle:   parseInt(document.getElementById('shadowAngle').value),
-    posYOffset:    parseInt(document.getElementById('posYOffset').value),
+  const btn=document.getElementById('runBtn');btn.disabled=true;
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('resultsGrid').innerHTML='';generatedFiles={};
+
+  const style={
+    fontName:document.getElementById('fontName').value||'Arial',
+    fontSize:parseInt(document.getElementById('fontSize').value),
+    leading:parseInt(document.getElementById('leading').value),
+    fontColor:hexToRgb01(document.getElementById('fontColor').value),
+    strokeOn:document.getElementById('strokeOn').checked,
+    strokeColor:hexToRgb01(document.getElementById('strokeColor').value),
+    strokeWidth:parseFloat(document.getElementById('strokeWidth').value),
+    shadowOn:document.getElementById('shadowOn').checked,
+    shadowColor:hexToRgb01(document.getElementById('shadowColor').value),
+    shadowOpacity:parseFloat(document.getElementById('shadowOpacity').value)/100,
+    shadowDist:parseInt(document.getElementById('shadowDist').value),
+    shadowBlur:parseInt(document.getElementById('shadowBlur').value),
+    shadowAngle:parseInt(document.getElementById('shadowAngle').value),
+    posYOffset:parseInt(document.getElementById('posYOffset').value),
   };
-  const maxChars = parseInt(document.getElementById('maxChars').value);
+  const maxChars=parseInt(document.getElementById('maxChars').value);
 
-  try {
-    setStep(1);
-    log('Iniciando pipeline...', 'info');
-    const transcript = await transcribeWithGroq(videoFileObj, groqKey);
+  try{
+    setStep(1);log('Iniciando pipeline...','info');
+    let transcript=null;let totalDuration=300;
 
-    setStep(2);
-    log('Leyendo Google Sheet...');
-    const sheetId = extractSheetId(sheetUrl);
-    if (!sheetId) throw new Error('URL de Sheets inválida');
-    const rows = await fetchSheetData(sheetId);
-    const enTexts = rows.map(r => (r[0]||'').trim()).filter(Boolean);
-    log(`Sheet leído: ${enTexts.length} bloques`, 'ok');
-
-    setStep(3);
-    for (let li = 0; li < activeLangs.length; li++) {
-      const lang = activeLangs[li];
-      log(`─── ${lang.label} ───`, 'info');
-      const hasTranslation = rows.some(r => r[li+1] && r[li+1].trim());
-      let translatedTexts = [];
-      if (hasTranslation) {
-        translatedTexts = rows.map(r => (r[li+1]||'').trim());
-        log(`Usando traducción del Sheet para ${lang.label}`, 'ok');
+    if(currentMode==='whisper'){
+      transcript=await transcribeWithGroq(videoFileObj,groqKey);
+      totalDuration=transcript.segments?.[transcript.segments.length-1]?.end||300;
+    } else {
+      log('Modo Sheet: sin transcripción de audio','ok');
+      if(videoFileObj){
+        try{totalDuration=await getVideoDuration(videoFileObj);log(`Duración del video: ${totalDuration.toFixed(1)}s`,'ok');}
+        catch(e){log(`No se pudo leer duración. Usando ${totalDuration}s por defecto.`,'warn');}
       } else {
-        log(`Traduciendo ${enTexts.length} bloques con Groq LLaMA...`);
-        for (let ri = 0; ri < enTexts.length; ri++) {
-          log(`  Bloque ${ri+1}/${enTexts.length}...`);
-          translatedTexts.push(await translateText(enTexts[ri], lang.label, groqKey));
-        }
-        log(`Traducción ${lang.label} lista`, 'ok');
+        log(`Sin video — usando ${totalDuration}s estimados. Carga el video para mayor precisión.`,'warn');
       }
-      setStep(4);
-      log(`Generando JSX para ${lang.label}...`);
-      const subs = buildSubtitles(transcript, enTexts, translatedTexts, maxChars);
-      const jsx = generateJSX(subs, lang.label, { ...style, langIndex: li });
-      const filename = `LDM_SubGen_${lang.code.toUpperCase()}.jsx`;
-      generatedFiles[filename] = jsx;
-      addResultCard(lang.label, filename, subs.length);
-      log(`Listo: ${filename} — ${subs.length} subtítulos`, 'ok');
     }
 
-    document.getElementById('progressFill').style.width = '100%';
-    log('Pipeline completo. Descarga los .jsx y córrelos en AE. ✨', 'ok');
-  } catch(e) {
-    log('ERROR: ' + e.message, 'err');
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-  }
+    setStep(2);log('Leyendo Google Sheet...');
+    const sheetId=extractSheetId(sheetUrl);if(!sheetId)throw new Error('URL de Sheets inválida');
+    const rows=sheetRowsCache||await fetchSheetData(sheetId);
+    const enTexts=rows.map(r=>(r[0]||'').trim()).filter(Boolean);
+    if(!enTexts.length)throw new Error('No hay texto en inglés en la primera columna del Sheet.');
+    log(`Sheet leído: ${enTexts.length} bloques EN`,'ok');
+
+    setStep(3);
+    for(let li=0;li<activeLangs.length;li++){
+      const lang=activeLangs[li];
+      log(`─── ${lang.label} ───`,'info');
+      const hasTranslation=rows.some(r=>r[li+1]&&r[li+1].trim());
+      let translated=[];
+      if(hasTranslation){
+        translated=rows.map(r=>(r[li+1]||'').trim());
+        log(`Usando traducción del Sheet para ${lang.label}`,'ok');
+      } else {
+        log(`Traduciendo ${enTexts.length} bloques con Groq LLaMA...`);
+        for(let ri=0;ri<enTexts.length;ri++){log(`  Bloque ${ri+1}/${enTexts.length}...`);translated.push(await translateText(enTexts[ri],lang.label,groqKey));}
+        log(`Traducción ${lang.label} lista`,'ok');
+      }
+      setStep(4);log(`Generando JSX para ${lang.label}...`);
+      let subs,sourceNote,meta;
+      if(currentMode==='whisper'){subs=buildFromWhisper(transcript,enTexts,translated,maxChars);sourceNote='Groq Whisper large-v3 — tiempos reales de audio';meta='tiempos reales';}
+      else{subs=buildFromSheet(enTexts,translated,maxChars,totalDuration);sourceNote='Texto del Sheet — tiempos proporcionales (ajustar en AE si necesitas precisión)';meta='tiempos proporcionales';}
+      const jsx=generateJSX(subs,lang.label,{...style,langIndex:li},sourceNote);
+      const filename=`LDM_SubGen_${lang.code.toUpperCase()}.jsx`;
+      generatedFiles[filename]=jsx;
+      addResultCard(lang.label,filename,subs.length,meta);
+      log(`Listo: ${filename} — ${subs.length} subtítulos`,'ok');
+    }
+    document.getElementById('progressFill').style.width='100%';
+    log('Pipeline completo. Descarga los .jsx y córrelos en AE. ✨','ok');
+  }catch(e){log('ERROR: '+e.message,'err');console.error(e);}
+  finally{btn.disabled=false;}
 }
 
-renderLangTags();
-updatePreview();
+renderLangTags();updatePreview();
 </script>
 </body>
 </html>
