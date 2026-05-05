@@ -436,23 +436,37 @@ async function runPipeline(){
       cache[lang.code]={};
       for(var ti=0;ti<uniqueTexts.length;ti++){
         var txt=uniqueTexts[ti];
-        var res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
-          method:"POST",
-          headers:{"content-type":"application/json","authorization":"Bearer "+groqKey},
-          body:JSON.stringify({
-            model:"llama-3.3-70b-versatile",
-            max_tokens:300,
-            messages:[
-              {role:"system",content:"Professional subtitle translator. Return ONLY the translated text. No explanations. Concise and natural for video subtitles."},
-              {role:"user",content:"Translate to "+lang.label+":\n\n"+txt}
-            ]
-          })
-        });
-        if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Groq: "+(er.error?er.error.message:res.status));}
-        var rd=await res.json();
-        cache[lang.code][txt]=rd.choices[0].message.content.trim();
+        // Retry loop with backoff for Groq rate limits
+        var translated=null;
+        for(var attempt=0;attempt<5;attempt++){
+          var res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+            method:"POST",
+            headers:{"content-type":"application/json","authorization":"Bearer "+groqKey},
+            body:JSON.stringify({
+              model:"llama-3.3-70b-versatile",
+              max_tokens:300,
+              messages:[
+                {role:"system",content:"Professional subtitle translator. Return ONLY the translated text. No explanations. Concise and natural for video subtitles."},
+                {role:"user",content:"Translate to "+lang.label+":\n\n"+txt}
+              ]
+            })
+          });
+          if(res.status===429){
+            var wait=3000+(attempt*2000);
+            log("Rate limit Groq, esperando "+Math.round(wait/1000)+"s...");
+            await sleep(wait);
+            continue;
+          }
+          if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Groq: "+(er.error?er.error.message:res.status));}
+          var rd=await res.json();
+          translated=rd.choices[0].message.content.trim();
+          break;
+        }
+        if(!translated) throw new Error("Groq: no se pudo traducir despues de varios intentos.");
+        cache[lang.code][txt]=translated;
         done++;
         setProgress(62+Math.round((done/total)*33),"Traduciendo a "+lang.label+"... ("+done+"/"+total+")");
+        await sleep(2100);
       }
       log("Traduccion a "+lang.label+" lista","ok");
     }
