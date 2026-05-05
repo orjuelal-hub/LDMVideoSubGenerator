@@ -119,14 +119,14 @@
     <div>
       <div class="section-label">API Keys</div>
       <div class="note note-blue" style="margin-bottom:10px;font-size:11px;">
-        <strong>AssemblyAI</strong> — transcribe el audio<br>
-        <a href="https://www.assemblyai.com" target="_blank" style="color:#88aaff;">assemblyai.com</a> · gratis<br><br>
-        <strong>Groq</strong> — traduce con LLaMA 70b<br>
-        <a href="https://console.groq.com" target="_blank" style="color:#88aaff;">console.groq.com</a> · gratis
+        <strong>AssemblyAI</strong> — transcribe desde Drive o YouTube<br>
+        <a href="https://www.assemblyai.com" target="_blank" style="color:#88aaff;">assemblyai.com</a><br><br>
+        <strong>MyMemory</strong> — traduce automaticamente<br>
+        <span style="color:var(--accent);">Gratis, sin key, sin limite</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="field"><label>AssemblyAI API Key</label><input type="password" id="assemblyKey" placeholder="••••••••••••••••"/></div>
-        <div class="field"><label>Groq API Key</label><input type="password" id="groqKey" placeholder="gsk_••••••••••••••••"/></div>
+        <div style="display:none"><input type="hidden" id="groqKey" value="unused"/></div>
       </div>
     </div>
     <hr class="divider">
@@ -305,7 +305,6 @@
 </div>
 
 <script>
-var BACKEND_URL = "https://ldm-video-sub-api.onrender.com";
 var activeLangs=[{code:"es",label:"Espanol (LATAM)"},{code:"pt",label:"Portugues (BR)"}];
 var segments=[];
 var generatedFiles={};
@@ -371,7 +370,11 @@ function setProgress(pct,label){
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
 async function runPipeline(){
+  var assemblyKey=document.getElementById("assemblyKey").value.trim();
+  var groqKey=document.getElementById("groqKey").value.trim();
   var videoUrl=document.getElementById("videoUrl").value.trim();
+  if(!assemblyKey){log("Falta AssemblyAI API Key","err");return;}
+  // groqKey not needed - using MyMemory free API
   if(!videoUrl){log("Falta el link del video","err");return;}
   if(!activeLangs.length){log("Agrega al menos un idioma destino","err");return;}
 
@@ -380,24 +383,30 @@ async function runPipeline(){
   var maxChars=parseInt(document.getElementById("maxChars").value)||45;
 
   try{
-    // TRANSCRIBE via backend
-    setProgress(5,"Conectando con el servidor LDM...");
+    // TRANSCRIBE
+    setProgress(5,"Conectando con AssemblyAI...");
     log("Iniciando transcripcion...","info");
 
-    var submitRes=await fetch(BACKEND_URL+"/transcribe",{
+    var driveId=getDriveId(videoUrl);
+    var ytId=getYouTubeId(videoUrl);
+    var audioUrl=videoUrl;
+    if(driveId) audioUrl="https://drive.google.com/uc?export=download&id="+driveId;
+
+    log("Enviando a AssemblyAI...");
+    var submitRes=await fetch("https://api.assemblyai.com/v2/transcript",{
       method:"POST",
-      headers:{"content-type":"application/json"},
-      body:JSON.stringify({videoUrl:videoUrl})
+      headers:{"authorization":assemblyKey,"content-type":"application/json"},
+      body:JSON.stringify({audio_url:audioUrl,speech_models:["universal-3-pro","universal-2"]})
     });
-    if(!submitRes.ok){var e=await submitRes.json().catch(function(){return{};});throw new Error("Backend: "+(e.error||submitRes.status));}
+    if(!submitRes.ok){var e=await submitRes.json().catch(function(){return{};});throw new Error("AssemblyAI: "+(e.error||submitRes.status));}
     var submitData=await submitRes.json();
-    var jobId=submitData.jobId;
+    var jobId=submitData.id;
     log("Job iniciado: "+jobId);
 
     var transcript=null;
     for(var attempt=0;attempt<120;attempt++){
       await sleep(5000);
-      var poll=await fetch(BACKEND_URL+"/transcribe/"+jobId);
+      var poll=await fetch("https://api.assemblyai.com/v2/transcript/"+jobId,{headers:{"authorization":assemblyKey}});
       var pollData=await poll.json();
       setProgress(10+Math.min(attempt*2,50),"Transcribiendo... ("+pollData.status+")");
       if(pollData.status==="completed"){
@@ -405,7 +414,7 @@ async function runPipeline(){
         log("Transcripcion completa: "+(pollData.words?pollData.words.length:0)+" palabras","ok");
         break;
       }
-      if(pollData.status==="error") throw new Error("Transcripcion error: "+pollData.error);
+      if(pollData.status==="error") throw new Error("AssemblyAI: "+pollData.error);
       log("Estado: "+pollData.status+"...");
     }
     if(!transcript) throw new Error("Timeout esperando transcripcion.");
@@ -415,8 +424,8 @@ async function runPipeline(){
     segments=buildSegments(transcript,maxChars);
     log(segments.length+" segmentos creados","ok");
 
-    // TRANSLATE — Groq batch, one call per language
-    log("Traduciendo con Groq LLaMA...","info");
+    // TRANSLATE — batch all segments in ONE call per language
+    log("Traduciendo con Groq LLaMA (1 llamada por idioma)...","info");
     var uniqueTexts=[...new Set(segments.map(function(s){return s.text;}))];
     var cache={};
 
@@ -424,39 +433,39 @@ async function runPipeline(){
       var lang=activeLangs[li];
       cache[lang.code]={};
       setProgress(62+Math.round((li/activeLangs.length)*33),"Traduciendo a "+lang.label+"...");
-      log("Traduciendo "+uniqueTexts.length+" segmentos a "+lang.label+"...");
-      var numbered=uniqueTexts.map(function(t,i){return (i+1)+". "+t;}).join("\n");
-      var translated=null;
-      for(var attempt=0;attempt<4;attempt++){
-        var res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
-          method:"POST",
-          headers:{"content-type":"application/json","authorization":"Bearer "+groqKey},
-          body:JSON.stringify({
-            model:"llama-3.3-70b-versatile",
-            max_tokens:4000,
-            messages:[
-              {role:"system",content:"Professional subtitle translator. Translate ALL lines to "+lang.label+". Return ONLY a numbered list: 1. [translation]\n2. [translation]\netc. No explanations. Concise for video subtitles."},
-              {role:"user",content:"Translate to "+lang.label+":\n\n"+numbered}
-            ]
-          })
-        });
-        if(res.status===429){log("Rate limit, esperando...");await sleep(6000+(attempt*3000));continue;}
-        if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Groq: "+(er.error?er.error.message:res.status));}
-        var rd=await res.json();
-        translated=rd.choices[0].message.content.trim();
-        break;
-      }
-      if(!translated) throw new Error("Groq: no se pudo traducir a "+lang.label);
-      var tLines=translated.split("\n").filter(function(l){return l.trim();});
-      for(var li2=0;li2<tLines.length;li2++){
-        var m=tLines[li2].trim().match(/^\d+\.\s*(.+)$/);
-        if(li2<uniqueTexts.length) cache[lang.code][uniqueTexts[li2]]=m?m[1]:tLines[li2];
-      }
+      log("Traduciendo "+uniqueTexts.length+" segmentos a "+lang.label+" en una sola llamada...");
+
+      // MyMemory API - free, no key needed, CORS friendly
+      // Translate segment by segment with smart batching
+      var langCodeMap={
+        "es":"es-MX","pt":"pt-BR","fr":"fr-FR","de":"de-DE",
+        "it":"it-IT","ja":"ja-JP","ko":"ko-KR","zh":"zh-CN",
+        "ar":"ar-SA","ru":"ru-RU","nl":"nl-NL","pl":"pl-PL"
+      };
+      var targetCode=langCodeMap[lang.code]||lang.code;
+
       for(var ti=0;ti<uniqueTexts.length;ti++){
-        if(!cache[lang.code][uniqueTexts[ti]]) cache[lang.code][uniqueTexts[ti]]=uniqueTexts[ti];
+        var txt=uniqueTexts[ti];
+        var url="https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair=en|"+targetCode;
+        var ok=false;
+        for(var attempt=0;attempt<3;attempt++){
+          try{
+            var res=await fetch(url);
+            var rd=await res.json();
+            if(rd.responseStatus===200){
+              cache[lang.code][txt]=rd.responseData.translatedText;
+              ok=true;
+              break;
+            }
+          }catch(e){}
+          await sleep(1000);
+        }
+        if(!ok) cache[lang.code][txt]=txt;
+        setProgress(62+Math.round(((li*uniqueTexts.length+ti+1)/(activeLangs.length*uniqueTexts.length))*33),
+          "Traduciendo "+lang.label+"... ("+(ti+1)+"/"+uniqueTexts.length+")");
+        await sleep(300);
       }
       log("Traduccion a "+lang.label+" lista","ok");
-      if(li<activeLangs.length-1) await sleep(2000);
     }
 
     // Apply translations
@@ -635,15 +644,13 @@ function buildJSX(subs,langLabel,style,langIdx){
 
 function downloadFile(filename){
   var content=generatedFiles[filename];
-  // Open in new tab - works on GitHub Pages
-  var w=window.open();
-  w.document.open();
-  w.document.write("<pre style='font-family:monospace;font-size:12px;white-space:pre-wrap;padding:20px'>");
-  w.document.write("<div style='margin-bottom:12px;font-weight:bold;font-size:14px'>"+filename+" — Copia todo el contenido (Cmd+A, Cmd+C) y pégalo en un archivo .jsx</div>");
-  w.document.write(content.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"));
-  w.document.write("</pre>");
-  w.document.close();
-  w.document.title=filename;
+  var encoded=encodeURIComponent(content);
+  var a=document.createElement("a");
+  a.href="data:text/plain;charset=utf-8,"+encoded;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function getStyle(){
