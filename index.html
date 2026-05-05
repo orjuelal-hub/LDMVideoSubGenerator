@@ -644,13 +644,22 @@ function buildJSX(subs,langLabel,style,langIdx){
 
 function downloadFile(filename){
   var content=generatedFiles[filename];
-  var encoded=encodeURIComponent(content);
-  var a=document.createElement("a");
-  a.href="data:text/plain;charset=utf-8,"+encoded;
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  var w=window.open("","_blank");
+  w.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>"+filename+"</title>");
+  w.document.write("<style>body{background:#0a0a0a;color:#f0f0f0;font-family:monospace;font-size:12px;padding:20px;line-height:1.6}");
+  w.document.write(".header{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:16px;margin-bottom:16px}");
+  w.document.write(".filename{color:#c8f135;font-size:16px;font-weight:bold;margin-bottom:8px}");
+  w.document.write(".instructions{color:#888;font-size:13px;margin-bottom:4px}");
+  w.document.write(".steps{color:#4488ff;font-size:12px}");
+  w.document.write(".code{background:#111;border:1px solid #333;border-radius:6px;padding:16px;white-space:pre-wrap;word-break:break-all}</style></head><body>");
+  w.document.write("<div class='header'>");
+  w.document.write("<div class='filename'>"+filename+"</div>");
+  w.document.write("<div class='instructions'>Selecciona todo el código (Cmd+A), cópialo (Cmd+C)</div>");
+  w.document.write("<div class='steps'>Luego en After Effects: Archivo → Scripts → Ejecutar archivo de script → pega en un archivo nuevo .jsx</div>");
+  w.document.write("</div>");
+  w.document.write("<div class='code'>"+content.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</div>");
+  w.document.write("</body></html>");
+  w.document.close();
 }
 
 function getStyle(){
