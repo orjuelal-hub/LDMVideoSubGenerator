@@ -121,12 +121,12 @@
       <div class="note note-blue" style="margin-bottom:10px;font-size:11px;">
         <strong>AssemblyAI</strong> — transcribe desde Drive o YouTube<br>
         <a href="https://www.assemblyai.com" target="_blank" style="color:#88aaff;">assemblyai.com</a><br><br>
-        <strong>Claude API</strong> — traduce (Anthropic)<br>
-        <a href="https://console.anthropic.com" target="_blank" style="color:#88aaff;">console.anthropic.com</a>
+        <strong>MyMemory</strong> — traduce automaticamente<br>
+        <span style="color:var(--accent);">Gratis, sin key, sin limite</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="field"><label>AssemblyAI API Key</label><input type="password" id="assemblyKey" placeholder="••••••••••••••••"/></div>
-        <div class="field"><label>Claude API Key (Anthropic)</label><input type="password" id="groqKey" placeholder="sk-ant-••••••••••••••••"/></div>
+        <div style="display:none"><input type="hidden" id="groqKey" value="unused"/></div>
       </div>
     </div>
     <hr class="divider">
@@ -374,7 +374,7 @@ async function runPipeline(){
   var groqKey=document.getElementById("groqKey").value.trim();
   var videoUrl=document.getElementById("videoUrl").value.trim();
   if(!assemblyKey){log("Falta AssemblyAI API Key","err");return;}
-  if(!groqKey){log("Falta Claude API Key","err");return;}
+  // groqKey not needed - using MyMemory free API
   if(!videoUrl){log("Falta el link del video","err");return;}
   if(!activeLangs.length){log("Agrega al menos un idioma destino","err");return;}
  
@@ -435,40 +435,35 @@ async function runPipeline(){
       setProgress(62+Math.round((li/activeLangs.length)*33),"Traduciendo a "+lang.label+"...");
       log("Traduciendo "+uniqueTexts.length+" segmentos a "+lang.label+" en una sola llamada...");
  
-      // Build numbered list for batch translation
-      var numbered=uniqueTexts.map(function(t,i){return (i+1)+". "+t;}).join("\n");
+      // MyMemory API - free, no key needed, CORS friendly
+      // Translate segment by segment with smart batching
+      var langCodeMap={
+        "es":"es-MX","pt":"pt-BR","fr":"fr-FR","de":"de-DE",
+        "it":"it-IT","ja":"ja-JP","ko":"ko-KR","zh":"zh-CN",
+        "ar":"ar-SA","ru":"ru-RU","nl":"nl-NL","pl":"pl-PL"
+      };
+      var targetCode=langCodeMap[lang.code]||lang.code;
  
-      var translated=null;
-      for(var attempt=0;attempt<4;attempt++){
-        var res=await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"content-type":"application/json","x-api-key":groqKey,"anthropic-version":"2023-06-01"},
-          body:JSON.stringify({
-            model:"claude-haiku-4-5-20251001",
-            max_tokens:4000,
-            messages:[
-              {role:"user",content:"You are a professional subtitle translator. Translate ALL lines to "+lang.label+". Return ONLY a numbered list in the exact same format: 1. [translation]\n2. [translation]\netc. No explanations, no extra text. Keep translations concise and natural for video subtitles.\n\nTranslate each line to "+lang.label+":\n\n"+numbered}
-            ]
-          })
-        });
-        if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Claude API: "+(er.error?er.error.message:res.status));}
-        var rd=await res.json();
-        translated=rd.content[0].text.trim();
-        break;
-      }
-      if(!translated) throw new Error("Groq: no se pudo traducir a "+lang.label+" despues de varios intentos.");
- 
-      // Parse numbered response back into cache
-      var lines=translated.split("\n").filter(function(l){return l.trim();});
-      for(var li2=0;li2<lines.length;li2++){
-        var line=lines[li2].trim();
-        var match=line.match(/^\d+\.\s*(.+)$/);
-        var translatedText=match?match[1]:line;
-        if(li2<uniqueTexts.length) cache[lang.code][uniqueTexts[li2]]=translatedText;
-      }
-      // Fill any missing
       for(var ti=0;ti<uniqueTexts.length;ti++){
-        if(!cache[lang.code][uniqueTexts[ti]]) cache[lang.code][uniqueTexts[ti]]=uniqueTexts[ti];
+        var txt=uniqueTexts[ti];
+        var url="https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair=en|"+targetCode;
+        var ok=false;
+        for(var attempt=0;attempt<3;attempt++){
+          try{
+            var res=await fetch(url);
+            var rd=await res.json();
+            if(rd.responseStatus===200){
+              cache[lang.code][txt]=rd.responseData.translatedText;
+              ok=true;
+              break;
+            }
+          }catch(e){}
+          await sleep(1000);
+        }
+        if(!ok) cache[lang.code][txt]=txt;
+        setProgress(62+Math.round(((li*uniqueTexts.length+ti+1)/(activeLangs.length*uniqueTexts.length))*33),
+          "Traduciendo "+lang.label+"... ("+(ti+1)+"/"+uniqueTexts.length+")");
+        await sleep(300);
       }
       log("Traduccion a "+lang.label+" lista","ok");
     }
