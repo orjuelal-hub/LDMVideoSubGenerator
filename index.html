@@ -435,38 +435,39 @@ async function runPipeline(){
       setProgress(62+Math.round((li/activeLangs.length)*33),"Traduciendo a "+lang.label+"...");
       log("Traduciendo "+uniqueTexts.length+" segmentos a "+lang.label+" en una sola llamada...");
 
-      // MyMemory API - free, no key needed, CORS friendly
-      // Translate segment by segment with smart batching
-      var langCodeMap={
-        "es":"es-MX","pt":"pt-BR","fr":"fr-FR","de":"de-DE",
-        "it":"it-IT","ja":"ja-JP","ko":"ko-KR","zh":"zh-CN",
-        "ar":"ar-SA","ru":"ru-RU","nl":"nl-NL","pl":"pl-PL"
-      };
-      var targetCode=langCodeMap[lang.code]||lang.code;
-
+      // Groq batch translation - one call per language
+      var numbered=uniqueTexts.map(function(t,i){return (i+1)+". "+t;}).join("\n");
+      var translated=null;
+      for(var attempt=0;attempt<4;attempt++){
+        var res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+          method:"POST",
+          headers:{"content-type":"application/json","authorization":"Bearer "+groqKey},
+          body:JSON.stringify({
+            model:"llama-3.3-70b-versatile",
+            max_tokens:4000,
+            messages:[
+              {role:"system",content:"Professional subtitle translator. Translate ALL lines to "+lang.label+". Return ONLY a numbered list: 1. [translation]\n2. [translation]\netc. No explanations. Concise for video subtitles."},
+              {role:"user",content:"Translate to "+lang.label+":\n\n"+numbered}
+            ]
+          })
+        });
+        if(res.status===429){log("Rate limit Groq, esperando...");await sleep(6000+(attempt*3000));continue;}
+        if(!res.ok){var er=await res.json().catch(function(){return{};});throw new Error("Groq: "+(er.error?er.error.message:res.status));}
+        var rd=await res.json();
+        translated=rd.choices[0].message.content.trim();
+        break;
+      }
+      if(!translated) throw new Error("Groq: no se pudo traducir a "+lang.label);
+      var tLines=translated.split("\n").filter(function(l){return l.trim();});
+      for(var li2=0;li2<tLines.length;li2++){
+        var m=tLines[li2].trim().match(/^\d+\.\s*(.+)$/);
+        if(li2<uniqueTexts.length) cache[lang.code][uniqueTexts[li2]]=m?m[1]:tLines[li2];
+      }
       for(var ti=0;ti<uniqueTexts.length;ti++){
-        var txt=uniqueTexts[ti];
-        var url="https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair=en|"+targetCode;
-        var ok=false;
-        for(var attempt=0;attempt<3;attempt++){
-          try{
-            var res=await fetch(url);
-            var rd=await res.json();
-            if(rd.responseStatus===200){
-              cache[lang.code][txt]=rd.responseData.translatedText;
-              ok=true;
-              break;
-            }
-          }catch(e){}
-          await sleep(1000);
-        }
-        if(!ok) cache[lang.code][txt]=txt;
-        setProgress(62+Math.round(((li*uniqueTexts.length+ti+1)/(activeLangs.length*uniqueTexts.length))*33),
-          "Traduciendo "+lang.label+"... ("+(ti+1)+"/"+uniqueTexts.length+")");
-        await sleep(300);
+        if(!cache[lang.code][uniqueTexts[ti]]) cache[lang.code][uniqueTexts[ti]]=uniqueTexts[ti];
       }
       log("Traduccion a "+lang.label+" lista","ok");
-    }
+      if(li<activeLangs.length-1) await sleep(2000);
 
     // Apply translations
     for(var si=0;si<segments.length;si++){
@@ -646,17 +647,10 @@ function downloadFile(filename){
   var content=generatedFiles[filename];
   var w=window.open("","_blank");
   w.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>"+filename+"</title>");
-  w.document.write("<style>body{background:#0a0a0a;color:#f0f0f0;font-family:monospace;font-size:12px;padding:20px;line-height:1.6}");
-  w.document.write(".header{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:16px;margin-bottom:16px}");
-  w.document.write(".filename{color:#c8f135;font-size:16px;font-weight:bold;margin-bottom:8px}");
-  w.document.write(".instructions{color:#888;font-size:13px;margin-bottom:4px}");
-  w.document.write(".steps{color:#4488ff;font-size:12px}");
-  w.document.write(".code{background:#111;border:1px solid #333;border-radius:6px;padding:16px;white-space:pre-wrap;word-break:break-all}</style></head><body>");
-  w.document.write("<div class='header'>");
-  w.document.write("<div class='filename'>"+filename+"</div>");
-  w.document.write("<div class='instructions'>Selecciona todo el código (Cmd+A), cópialo (Cmd+C)</div>");
-  w.document.write("<div class='steps'>Luego en After Effects: Archivo → Scripts → Ejecutar archivo de script → pega en un archivo nuevo .jsx</div>");
-  w.document.write("</div>");
+  w.document.write("<style>body{background:#0a0a0a;color:#f0f0f0;font-family:monospace;font-size:12px;padding:20px;line-height:1.6}.hdr{background:#1a1a1a;border:1px solid #c8f135;border-radius:6px;padding:16px;margin-bottom:16px}.fn{color:#c8f135;font-size:15px;font-weight:bold;margin-bottom:8px}.inst{color:#aaa;margin-bottom:4px}.steps{color:#4488ff;font-size:11px}.code{background:#111;border:1px solid #333;border-radius:6px;padding:16px;white-space:pre-wrap}</style></head><body>");
+  w.document.write("<div class='hdr'><div class='fn'>"+filename+"</div>");
+  w.document.write("<div class='inst'>1. Selecciona todo: Cmd+A &nbsp;&nbsp; 2. Copia: Cmd+C</div>");
+  w.document.write("<div class='steps'>En After Effects: Archivo -> Scripts -> Ejecutar archivo de script... (pega en un .jsx nuevo)</div></div>");
   w.document.write("<div class='code'>"+content.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</div>");
   w.document.write("</body></html>");
   w.document.close();
