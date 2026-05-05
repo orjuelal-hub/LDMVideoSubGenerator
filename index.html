@@ -396,7 +396,7 @@ async function runPipeline(){
     var submitRes=await fetch("https://api.assemblyai.com/v2/transcript",{
       method:"POST",
       headers:{"authorization":assemblyKey,"content-type":"application/json"},
-      body:JSON.stringify({audio_url:audioUrl,punctuate:true,format_text:true})
+      body:JSON.stringify({audio_url:audioUrl,speech_model:"universal-2",punctuate:true,format_text:true})
     });
     if(!submitRes.ok){var e=await submitRes.json().catch(function(){return{};});throw new Error("AssemblyAI: "+(e.error||submitRes.status));}
     var submitData=await submitRes.json();
