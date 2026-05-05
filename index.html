@@ -112,15 +112,15 @@
 </header>
 <div class="layout">
   <div class="sidebar">
-
+ 
     <div>
       <div class="section-label">API Key</div>
       <div class="note-blue" style="margin-bottom:10px;">Una sola key de Groq para todo. Gratis en <a href="https://console.groq.com" target="_blank" style="color:#88aaff;">console.groq.com</a></div>
       <div class="field"><label>Groq API Key</label><input type="password" id="groqKey" placeholder="gsk_••••••••••••••••"/></div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Modo de operación</div>
       <div class="mode-selector">
@@ -137,9 +137,9 @@
       </div>
       <div id="modeNote" style="margin-top:8px;"></div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Archivos</div>
       <div style="display:flex;flex-direction:column;gap:12px;">
@@ -165,9 +165,9 @@
         </div>
       </div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Idiomas destino</div>
       <div class="lang-tags" id="langTags"></div>
@@ -176,9 +176,9 @@
         <button class="btn-sm" onclick="addLang()">+ Agregar</button>
       </div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Tipografía AE</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -200,9 +200,9 @@
         </div>
       </div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Trazo</div>
       <div class="toggle-row"><span class="toggle-label">Activar trazo</span><label class="toggle"><input type="checkbox" id="strokeOn" checked onchange="toggleEl('strokeOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label></div>
@@ -211,9 +211,9 @@
         <div class="field"><label>Grosor</label><div class="range-row"><input type="range" id="strokeWidth" min="0.5" max="10" step="0.5" value="2" oninput="document.getElementById('strokeWidthVal').textContent=this.value+'px';updatePreview()"><span class="range-val" id="strokeWidthVal">2px</span></div></div>
       </div>
     </div>
-
+ 
     <hr class="divider">
-
+ 
     <div>
       <div class="section-label">Sombra</div>
       <div class="toggle-row"><span class="toggle-label">Activar sombra</span><label class="toggle"><input type="checkbox" id="shadowOn" onchange="toggleEl('shadowOpts',this.checked);updatePreview()"><span class="toggle-slider"></span></label></div>
@@ -227,9 +227,9 @@
         <div class="field"><label>Ángulo</label><div class="range-row"><input type="range" id="shadowAngle" min="0" max="360" step="5" value="135" oninput="document.getElementById('shadowAngleVal').textContent=this.value+'°';updatePreview()"><span class="range-val" id="shadowAngleVal">135°</span></div></div>
       </div>
     </div>
-
+ 
   </div>
-
+ 
   <div class="main">
     <div>
       <div class="section-label">Vista previa de estilo</div>
@@ -252,14 +252,14 @@
     <div id="resultsSection" style="display:none;"><div class="section-label" style="margin-bottom:8px;">Archivos generados</div><div class="results-grid" id="resultsGrid"></div></div>
   </div>
 </div>
-
+ 
 <script>
 let activeLangs=[{code:'es',label:'Español (LATAM)'},{code:'pt',label:'Portugués (BR)'}];
 let currentMode='sheet';
 let videoFileObj=null;
 let generatedFiles={};
 let sheetRowsCache=null;
-
+ 
 function setMode(mode){
   currentMode=mode;
   document.getElementById('modeSheetCard').classList.toggle('active',mode==='sheet');
@@ -282,11 +282,11 @@ function setMode(mode){
     document.getElementById('step1').textContent='1 · transcribir audio';
   }
 }
-
+ 
 function renderLangTags(){document.getElementById('langTags').innerHTML=activeLangs.map((l,i)=>`<div class="lang-tag"><span>${l.label}</span><button onclick="removeLang(${i})">×</button></div>`).join('');}
 function addLang(){const inp=document.getElementById('newLang');const val=inp.value.trim();if(!val)return;activeLangs.push({code:val.toLowerCase().replace(/\s+/g,'_'),label:val});inp.value='';renderLangTags();}
 function removeLang(i){activeLangs.splice(i,1);renderLangTags();}
-
+ 
 function onVideoSelect(input){
   const file=input.files[0];if(!file)return;
   videoFileObj=file;
@@ -296,7 +296,7 @@ function onVideoSelect(input){
   document.getElementById('videoZone').classList.add('ready');
   if(currentMode==='whisper'&&file.size>25*1024*1024){nameEl.style.color='var(--orange)';nameEl.textContent+=` ⚠ supera 25MB — usa modo "Texto del Sheet"`;}
 }
-
+ 
 document.addEventListener('DOMContentLoaded',()=>{
   const zone=document.getElementById('videoZone');
   zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
@@ -308,9 +308,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   setMode('sheet');
 });
-
+ 
 function onSheetUrlChange(){sheetRowsCache=null;document.getElementById('sheetStatus').innerHTML='';}
-
+ 
 async function previewSheet(){
   const url=document.getElementById('sheetUrl').value.trim();if(!url)return;
   const statusEl=document.getElementById('sheetStatus');
@@ -330,12 +330,12 @@ async function previewSheet(){
     statusEl.innerHTML=html;
   }catch(e){statusEl.innerHTML=`<span style="font-size:11px;color:var(--red);">${e.message}</span>`;}
 }
-
+ 
 function toggleEl(id,show){document.getElementById(id).style.display=show?'flex':'none';}
 function hexToRgb01(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
 function syncHex(pid,hid){document.getElementById(hid).value=document.getElementById(pid).value;}
 function syncPicker(hid,pid){const h=document.getElementById(hid).value;if(/^#[0-9a-fA-F]{6}$/.test(h))document.getElementById(pid).value=h;}
-
+ 
 function log(msg,type=''){
   const panel=document.getElementById('logPanel');
   const now=new Date();
@@ -347,7 +347,7 @@ function log(msg,type=''){
   panel.appendChild(line);panel.scrollTop=panel.scrollHeight;
 }
 function setStep(n){['step1','step2','step3','step4'].forEach((id,i)=>{document.getElementById(id).className='step'+(i+1<n?' done':i+1===n?' active':'');});document.getElementById('progressFill').style.width=((n-1)*25)+'%';}
-
+ 
 function updatePreview(){
   const text=document.getElementById('previewText');
   const fc=document.getElementById('fontColor').value;
@@ -366,7 +366,7 @@ function updatePreview(){
   if(shadowOn){const rad=(sAngle-180)*Math.PI/180;const dx=Math.round(Math.cos(rad)*sDist),dy=Math.round(Math.sin(rad)*sDist);const alpha=Math.round(sOpacity*255).toString(16).padStart(2,'0');shadows.push(`${dx}px ${dy}px ${sBlur}px ${sColor}${alpha}`);}
   text.style.textShadow=shadows.length?shadows.join(', '):'none';
 }
-
+ 
 async function transcribeWithGroq(file,groqKey){
   if(file.size>25*1024*1024)throw new Error(`El archivo pesa ${(file.size/1024/1024).toFixed(1)}MB. Groq acepta máx 25MB. Usa el modo "Texto del Sheet" si ya tienes el texto en inglés.`);
   log(`Enviando a Groq Whisper large-v3 (${(file.size/1024/1024).toFixed(1)}MB)...`);
@@ -378,22 +378,22 @@ async function transcribeWithGroq(file,groqKey){
   log(`Transcripción lista: ${data.segments?.length||'?'} segmentos`,'ok');
   return data;
 }
-
+ 
 async function translateText(text,targetLang,groqKey){
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${groqKey}`},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:[{role:'system',content:'Professional subtitle translator. Return ONLY the translated text. No explanations, no quotes. Concise and natural for video subtitles.'},{role:'user',content:`Translate to ${targetLang}:\n\n${text}`}]})});
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error('Groq LLaMA: '+(e.error?.message||res.status));}
   return (await res.json()).choices[0].message.content.trim();
 }
-
+ 
 function extractSheetId(url){const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:null;}
 async function fetchSheetData(sheetId){
   const res=await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`);
   if(!res.ok)throw new Error('No se pudo leer el Sheet. Verifica que sea público.');
   return (await res.text()).split('\n').map(row=>{const cols=[];let cur='',inQ=false;for(let i=0;i<row.length;i++){if(row[i]==='"'){inQ=!inQ;continue;}if(row[i]===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=row[i];}cols.push(cur.trim());return cols;}).filter(r=>r.some(c=>c)).slice(1);
 }
-
+ 
 function wrapText(text,maxChars){const words=text.split(' ');const lines=[];let cur='';for(const w of words){if((cur+' '+w).trim().length<=maxChars){cur=(cur+' '+w).trim();}else{if(cur)lines.push(cur);cur=w;}}if(cur)lines.push(cur);const blocks=[];for(let i=0;i<lines.length;i+=2)blocks.push(lines.slice(i,i+2).join('\n'));return blocks.length?blocks:[text];}
-
+ 
 function buildFromSheet(enTexts,translated,maxChars,totalDuration){
   const totalWords=enTexts.reduce((s,t)=>s+t.split(' ').length,0);
   let cursor=0;const subs=[];
@@ -404,7 +404,7 @@ function buildFromSheet(enTexts,translated,maxChars,totalDuration){
   });
   return subs;
 }
-
+ 
 function buildFromWhisper(transcript,enTexts,translated,maxChars){
   const segments=transcript.segments||[];if(!segments.length)throw new Error('Sin segmentos de tiempo.');
   const totalDuration=segments[segments.length-1].end;const spp=Math.max(1,Math.floor(segments.length/enTexts.length));const subs=[];
@@ -416,7 +416,7 @@ function buildFromWhisper(transcript,enTexts,translated,maxChars){
   });
   return subs;
 }
-
+ 
 function generateJSX(subtitles,langLabel,style,sourceNote){
   const L=[];
   L.push(`// LDMVideoSubGenerator v3.0 — ${langLabel}`);
@@ -461,18 +461,18 @@ function generateJSX(subtitles,langLabel,style,sourceNote){
   L.push('})();');
   return L.join('\n');
 }
-
+ 
 function downloadFile(filename){const blob=new Blob([generatedFiles[filename]],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
-
+ 
 function addResultCard(langLabel,filename,count,meta){
   document.getElementById('resultsSection').style.display='block';
   const card=document.createElement('div');card.className='result-card';
   card.innerHTML=`<div class="result-lang">${langLabel}</div><div class="result-name">${filename}</div><div class="result-meta">${count} subtítulos · ${meta}</div><button class="btn-download" onclick="downloadFile('${filename}')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Descargar .jsx</button>`;
   document.getElementById('resultsGrid').appendChild(card);
 }
-
+ 
 function getVideoDuration(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(url);res(v.duration);};v.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('No se pudo leer'));};v.src=url;});}
-
+ 
 async function runPipeline(){
   const groqKey=document.getElementById('groqKey').value.trim();
   const sheetUrl=document.getElementById('sheetUrl').value.trim();
@@ -480,11 +480,11 @@ async function runPipeline(){
   if(!sheetUrl){log('Falta el link del Google Sheet','err');return;}
   if(!activeLangs.length){log('Agrega al menos un idioma destino','err');return;}
   if(currentMode==='whisper'&&!videoFileObj){log('Selecciona el video para transcribir','err');return;}
-
+ 
   const btn=document.getElementById('runBtn');btn.disabled=true;
   document.getElementById('resultsSection').style.display='none';
   document.getElementById('resultsGrid').innerHTML='';generatedFiles={};
-
+ 
   const style={
     fontName:document.getElementById('fontName').value||'Arial',
     fontSize:parseInt(document.getElementById('fontSize').value),
@@ -502,11 +502,11 @@ async function runPipeline(){
     posYOffset:parseInt(document.getElementById('posYOffset').value),
   };
   const maxChars=parseInt(document.getElementById('maxChars').value);
-
+ 
   try{
     setStep(1);log('Iniciando pipeline...','info');
     let transcript=null;let totalDuration=300;
-
+ 
     if(currentMode==='whisper'){
       transcript=await transcribeWithGroq(videoFileObj,groqKey);
       totalDuration=transcript.segments?.[transcript.segments.length-1]?.end||300;
@@ -519,14 +519,14 @@ async function runPipeline(){
         log(`Sin video — usando ${totalDuration}s estimados. Carga el video para mayor precisión.`,'warn');
       }
     }
-
+ 
     setStep(2);log('Leyendo Google Sheet...');
     const sheetId=extractSheetId(sheetUrl);if(!sheetId)throw new Error('URL de Sheets inválida');
     const rows=sheetRowsCache||await fetchSheetData(sheetId);
     const enTexts=rows.map(r=>(r[0]||'').trim()).filter(Boolean);
     if(!enTexts.length)throw new Error('No hay texto en inglés en la primera columna del Sheet.');
     log(`Sheet leído: ${enTexts.length} bloques EN`,'ok');
-
+ 
     setStep(3);
     for(let li=0;li<activeLangs.length;li++){
       const lang=activeLangs[li];
@@ -556,7 +556,7 @@ async function runPipeline(){
   }catch(e){log('ERROR: '+e.message,'err');console.error(e);}
   finally{btn.disabled=false;}
 }
-
+ 
 renderLangTags();updatePreview();
 </script>
 </body>
